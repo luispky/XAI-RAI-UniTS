@@ -76,6 +76,7 @@ def gradcam_explanations_classifier_series(
         raise ValueError("`target_layers` must be a list of model layers (e.g., Bottleneck, Sequential).")
 
     # Generate Grad-CAM explanations
+    print(f"Generating Grad-CAM explanations using method '{method}' for class '{class_label_imagenet}'...")
     with gradcam_method(model=model, target_layers=target_layers) as cam:
         # Compute Grad-CAM heatmaps
         grayscale_cam = cam(input_tensor=perturbed_images, targets=targets)

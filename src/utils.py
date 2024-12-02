@@ -5,8 +5,9 @@ import torchvision
 import matplotlib.pyplot as plt
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
-from typing import Dict, Union
+from typing import Dict, Union, List
 from pathlib import Path
+from PIL import Image
 
 # Base directory for utils.py
 BASE_DIR = Path(__file__).resolve().parent
@@ -35,6 +36,20 @@ def get_imagenet_idx_to_class() -> Dict[int, str]:
     idx_to_class = {int(k): v[1].lower() for k, v in class_idx.items()}
 
     return idx_to_class
+
+def get_class_to_idx_imagenette() -> Dict[str, int]:
+    return {
+            'tench': 0,
+            'english_springer': 1,
+            'cassette_player': 2,
+            'chain_saw': 3,
+            'church': 4,
+            'french_horn': 5,
+            'garbage_truck': 6,
+            'gas_pump': 7,
+            'golf_ball': 8,
+            'parachute': 9
+            }   
 
 def normalize_images(images: torch.Tensor, to_numpy: bool = True) -> torch.Tensor | np.ndarray:
     """
@@ -127,8 +142,10 @@ def show_images(
             )
 
     plt.tight_layout()
-    filepath = FIGURES_DIR / f"{filename}.png"
-    plt.savefig(filepath)
+    if save_fig:
+        filepath = FIGURES_DIR / f"{filename}.png"
+        plt.savefig(filepath)
+    plt.show()
     plt.close()
     
 
@@ -223,7 +240,10 @@ def plot_images(images):
     plt.axis("off")
     plt.show()
 
-def plot_class_examples(dataloader, save_fig=False, filename="class_examples"):
+def plot_class_examples(dataloader: DataLoader, 
+                        save_fig: bool =False,
+                        filename: str ="class_examples"
+                        ):
     # Extract the class-to-index mapping
     class_to_idx = dataloader.dataset.class_to_idx
     idx_to_class = {value: key for key, value in class_to_idx.items()}
@@ -258,6 +278,74 @@ def plot_class_examples(dataloader, save_fig=False, filename="class_examples"):
         ax.axis("off")
 
     plt.tight_layout()
-    filepath = FIGURES_DIR / f"{filename}.png"
-    plt.savefig(filepath)
+    if save_fig:
+        filepath = FIGURES_DIR / f"{filename}.png"
+        plt.savefig(filepath)
+    else:
+        plt.show()
     plt.close()
+
+def load_local_images(image_paths: Union[str, List[str]], img_size: int = 224) -> torch.Tensor:
+    """
+    Loads and preprocesses one or multiple images for model inference.
+
+    :param image_paths: Path to a single image or a list of image paths.
+    :param img_size: The target size for resizing the images.
+    :return: Preprocessed image tensor(s) with batch dimension.
+    """
+    # Define the transformations
+    transforms_pipeline = transforms.Compose([
+        transforms.Resize((img_size, img_size)),  # Resize to img_size x img_size
+        transforms.ToTensor(),  # Convert image to tensor
+        transforms.Normalize(
+            mean=[0.485, 0.456, 0.406],  # Normalize using ImageNet mean
+            std=[0.229, 0.224, 0.225],   # Normalize using ImageNet std
+        ),
+    ])
+    
+    # Ensure image_paths is a list
+    if isinstance(image_paths, str):
+        image_paths = [image_paths]
+    
+    # Load and preprocess each image
+    images = []
+    for image_path in image_paths:
+        image = Image.open(image_path).convert("RGB")  # Ensure RGB format
+        images.append(transforms_pipeline(image))
+    
+    # Stack all image tensors to form a batch
+    return torch.stack(images)  # Shape: [batch_size, 3, img_size, img_size]
+
+def generate_noisy_images(
+    image: torch.Tensor, 
+    n_images: int, 
+    magnitude: float
+) -> torch.Tensor:
+    """
+    Generates a sequence of noisy images following the formula:
+    image[i] = original image + normal random noise * magnitude * i / n_images
+    
+        :param image: Input image tensor with shape (C, H, W) or (1, C, H, W).
+    :param n_images: Number of noisy images to generate.
+    :param magnitude: Scale of the noise to add.
+    :return: A tensor of noisy images with shape (n_images, C, H, W).
+    """
+    # Ensure input image has shape (1, C, W, H)
+    if image.dim() == 3:
+        image = image.unsqueeze(0)  # Add batch dimension
+    elif image.dim() != 4 or image.size(0) != 1:
+        raise ValueError("Input image must have shape (C, W, H) or (1, C, W, H).")
+
+    # Extract image dimensions
+    _, C, W, H = image.shape
+
+    # Generate normal random noise for all images in the sequence
+    noise = torch.randn((n_images, C, W, H), device=image.device)
+
+    # Create scaling factors
+    scaling_factors = torch.linspace(0, magnitude, steps=n_images, device=image.device).view(-1, 1, 1, 1)
+
+    # Add scaled noise to the image
+    noisy_images = image + noise * scaling_factors
+
+    return noisy_images
