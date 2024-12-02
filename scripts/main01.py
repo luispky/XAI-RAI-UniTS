@@ -32,15 +32,16 @@ def main():
     # Target layers for Grad-CAM
     target_layers = [model.layer4[-1]]
     
-    img_overlay_cam = gradcam_explanations_classifier_series(
+    img_overlay_cam, pred_labels  = gradcam_explanations_classifier_series(
         model=model,
         perturbed_images=noisy_images,
         class_label_imagenet=class_label,
         target_layers=target_layers,
         method="GradCAM",
+        predicted_labels=True,
     )
     
-    show_images(img_overlay_cam, save_fig=True, filename="gradcam_llama.png")
+    show_images(img_overlay_cam, labels=pred_labels, save_fig=True, filename="gradcam_llama.png")
 
 if __name__ == "__main__":
     main()

@@ -40,7 +40,8 @@ def gradcam_explanations_classifier_series(
     class_label_imagenet: str = "chain_saw",
     target_layers: List[Union[nn.Sequential, nn.Module]] = None,
     method: str = "GradCAM",
-) -> torch.Tensor:
+    predicted_labels: bool = False,
+) -> Union[torch.Tensor, List[str]]:
     """
     Produces GradCAM explanations for a series of perturbed images of a given ImageNet class.
 
@@ -85,5 +86,12 @@ def gradcam_explanations_classifier_series(
         imgs_overlay_cam = torch.tensor(
             np.array([show_cam_on_image(img, cam) for img, cam in zip(imgs_normalized, grayscale_cam)])
         )
+        
+        # Return predicted labels if requested
+        if predicted_labels:
+            predictions = cam.outputs.argmax(dim=1).to(torch.int32)
+            pred_labels = [IDX_TO_CLASS_IMAGENET[idx.item()] for idx in predictions]    
+            
+            return imgs_overlay_cam, pred_labels
 
     return imgs_overlay_cam
