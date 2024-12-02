@@ -11,9 +11,12 @@ sys.path.append(PARENT_DIRECTORY + "/src")
 from gradcam_explanations import gradcam_explanations_classifier_series
 from gradcam_explanations import CLASS_TO_IDX_IMAGENET, IDX_TO_CLASS_IMAGENET
 from utils import load_local_images, show_images, generate_noisy_images
+from utils import set_seed
 
 def main():
-
+    # Set seed for reproducibility
+    set_seed(42)
+    
     # Load test image
     image_path = PARENT_DIRECTORY + "/test_images/llama.jpeg"
     preprocessed_image = load_local_images(image_path)

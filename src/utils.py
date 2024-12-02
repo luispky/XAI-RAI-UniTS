@@ -8,6 +8,7 @@ from torch.utils.data import DataLoader
 from typing import Dict, Union, List
 from pathlib import Path
 from PIL import Image
+import random
 
 # Base directory for utils.py
 BASE_DIR = Path(__file__).resolve().parent
@@ -349,3 +350,12 @@ def generate_noisy_images(
     noisy_images = image + noise * scaling_factors
 
     return noisy_images
+
+def set_seed(seed):
+    """Sets the seed for Python, NumPy, and PyTorch to ensure reproducibility."""
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
