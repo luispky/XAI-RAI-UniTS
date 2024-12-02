@@ -1,10 +1,12 @@
+from email.mime import image
 import sys
 from torchvision.models import resnet50, ResNet50_Weights
 
 from pathlib import Path
 
 # Add src directory to Python path
-sys.path.append(str(Path(__file__).resolve().parent.parent / "src"))
+PARENT_DIRECTORY = str(Path(__file__).resolve().parent.parent)
+sys.path.append(PARENT_DIRECTORY + "/src")
 
 from gradcam_explanations import gradcam_explanations_classifier_series
 from gradcam_explanations import CLASS_TO_IDX_IMAGENET, IDX_TO_CLASS_IMAGENET
@@ -13,7 +15,7 @@ from utils import load_local_images, show_images, generate_noisy_images
 def main():
 
     # Load test image
-    image_path = "../test_images/llama.jpeg"
+    image_path = PARENT_DIRECTORY + "/test_images/llama.jpeg"
     preprocessed_image = load_local_images(image_path)
     class_label = "llama"
 

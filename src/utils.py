@@ -13,7 +13,7 @@ from PIL import Image
 BASE_DIR = Path(__file__).resolve().parent
 
 # Paths for saving results
-FIGURES_DIR = BASE_DIR.parent / "results"
+FIGURES_DIR = BASE_DIR.parent / "figures"
 FIGURES_DIR.mkdir(parents=True, exist_ok=True)
 
 def get_imagenet_idx_to_class() -> Dict[int, str]:
