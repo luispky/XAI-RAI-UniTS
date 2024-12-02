@@ -3,3 +3,7 @@ __pycache__/
 
 imagenette2-320.tgz
 imagenette2-320/
+
+tabular_datasets/
+experiments/
+
