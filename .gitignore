@@ -16,3 +16,6 @@ experiments/
 tabular_datasets/
 
 .idea/
+
+# Where models are saved
+models/
