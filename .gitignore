@@ -1,6 +1,10 @@
 # Ignore Python cache files
 __pycache__/
 
+# venv
+venv/
+.venv/
+
 imagenette2-320.tgz
 imagenette2-320/
 
