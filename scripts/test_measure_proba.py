@@ -13,7 +13,6 @@ from paths import MODELS_DIR, IMAGE_DIR, LABELS_PATH
 from measure_proba import MeasureProba
 from alexnet import download_alexnet, load_images, load_labels
 
-from torchvision.models import resnet50, ResNet50_Weights
 from utils import load_local_images, load_model
 
 def test(model_path=f"{str(MODELS_DIR)}/alexnet_weights.pth",  # !MODELS_DIR IS A PATH OBJECT, NOT A STRING
