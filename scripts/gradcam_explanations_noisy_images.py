@@ -1,8 +1,6 @@
 import sys
 from pathlib import Path
 
-from numpy import reshape
-
 # Add src directory to Python path
 PARENT_DIRECTORY = str(Path(__file__).resolve().parent.parent)
 sys.path.append(PARENT_DIRECTORY + "/src")
@@ -37,6 +35,7 @@ def main():
     
     # Target layers for Grad-CAM
     reshape_transform = None
+    target_layers = []
     if model_name == 'alexnet':
         target_layers = [model.features]
     elif model_name == 'resnet50':

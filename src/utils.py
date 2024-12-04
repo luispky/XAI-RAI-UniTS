@@ -1,5 +1,4 @@
 import os
-from pyexpat import model
 import numpy as np
 import torch
 import torchvision

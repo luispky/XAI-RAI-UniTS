@@ -4,7 +4,7 @@ import os
 import torch
 import torchvision
 import torch.nn as nn
-from typing import Dict, Union, List, Optional, Callable
+from typing import Dict, Union, List, Optional, Callable, Tuple
 import numpy as np
 
 from pytorch_grad_cam import (
@@ -32,11 +32,12 @@ def gradcam_explanations_classifier_series(
     model: nn.Module,
     perturbed_images: torch.Tensor,
     class_label_imagenet: str = "chain_saw",
-    target_layers: List[Union[nn.Sequential, nn.Module]] = None,
+    target_layers: Optional[List[nn.Module]] = None,
     method: str = "GradCAM",
     predicted_labels: bool = False,
     reshape_transform: Optional[Callable] = None,
-) -> Union[torch.Tensor, List[str]]:
+    # The function returns either a tuple or a single tensor
+) -> Union[torch.Tensor, Tuple[torch.Tensor, List[str]]]:
     """
     Produces GradCAM explanations for a series of perturbed images of a given ImageNet class.
 
