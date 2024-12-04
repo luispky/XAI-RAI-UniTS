@@ -4,7 +4,7 @@ import os
 import torch
 import torchvision
 import torch.nn as nn
-from typing import Dict, Union, List, Optional
+from typing import Dict, Union, List, Optional, Callable
 import numpy as np
 
 from pytorch_grad_cam import (
@@ -17,8 +17,7 @@ from pytorch_grad_cam import (
 from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
 from pytorch_grad_cam.utils.image import show_cam_on_image
 
-from utils import normalize_images, get_imagenet_idx_to_class
-from torchvision.models import resnet50, ResNet50_Weights
+from utils import normalize_images, CLASS_TO_IDX_IMAGENET, IDX_TO_CLASS_IMAGENET
 
 # Supported Grad-CAM methods
 METHODS = {
@@ -29,11 +28,6 @@ METHODS = {
     "HiResCAM": HiResCAM,
 }
 
-# Class-to-Index and Index-to-Class mappings for ImageNet
-IDX_TO_CLASS_IMAGENET = get_imagenet_idx_to_class()
-CLASS_TO_IDX_IMAGENET = {v: k for k, v in IDX_TO_CLASS_IMAGENET.items()}
-
-
 def gradcam_explanations_classifier_series(
     model: nn.Module,
     perturbed_images: torch.Tensor,
@@ -41,6 +35,7 @@ def gradcam_explanations_classifier_series(
     target_layers: List[Union[nn.Sequential, nn.Module]] = None,
     method: str = "GradCAM",
     predicted_labels: bool = False,
+    reshape_transform: Optional[Callable] = None,
 ) -> Union[torch.Tensor, List[str]]:
     """
     Produces GradCAM explanations for a series of perturbed images of a given ImageNet class.
@@ -58,6 +53,9 @@ def gradcam_explanations_classifier_series(
     if method not in METHODS:
         raise ValueError(f"Invalid method '{method}'. Choose from: {list(METHODS.keys())}")
 
+    # Preprocess the class label
+    class_label_imagenet = class_label_imagenet.lower().split(".")[0]
+    
     # Validate class label
     if class_label_imagenet not in CLASS_TO_IDX_IMAGENET:
         raise ValueError(f"Invalid class label '{class_label_imagenet}'. Please provide a valid ImageNet class label.")
@@ -78,13 +76,15 @@ def gradcam_explanations_classifier_series(
 
     # Generate Grad-CAM explanations
     print(f"Generating Grad-CAM explanations using method '{method}' for class '{class_label_imagenet}'...")
-    with gradcam_method(model=model, target_layers=target_layers) as cam:
+    with gradcam_method(model=model,
+                        target_layers=target_layers,
+                        reshape_transform=reshape_transform) as cam:
         # Compute Grad-CAM heatmaps
         grayscale_cam = cam(input_tensor=perturbed_images, targets=targets)
 
         # Overlay heatmaps onto normalized images
         imgs_overlay_cam = torch.tensor(
-            np.array([show_cam_on_image(img, cam) for img, cam in zip(imgs_normalized, grayscale_cam)])
+            np.array([show_cam_on_image(img, cam, use_rgb=True) for img, cam in zip(imgs_normalized, grayscale_cam)])
         )
         
         # Return predicted labels if requested

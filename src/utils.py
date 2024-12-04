@@ -1,4 +1,5 @@
 import os
+from pyexpat import model
 import numpy as np
 import torch
 import torchvision
@@ -11,14 +12,12 @@ from PIL import Image
 import random
 import tarfile
 import requests
+from torchvision.models import resnet50, ResNet50_Weights
+from torchvision.models import alexnet, AlexNet_Weights
+import timm
 
-
-# Base directory for utils.py
-BASE_DIR = Path(__file__).resolve().parent
-
-# Paths for saving results
-FIGURES_DIR = BASE_DIR.parent / "figures"
-FIGURES_DIR.mkdir(parents=True, exist_ok=True)
+from paths import MODELS_DIR, FIGURES_DIR, DATASETS_DIR
+from alexnet import download_alexnet
 
 
 def get_imagenet_idx_to_class() -> Dict[int, str]:
@@ -39,6 +38,9 @@ def get_imagenet_idx_to_class() -> Dict[int, str]:
 
     return idx_to_class
 
+# Class-to-Index and Index-to-Class mappings for ImageNet
+IDX_TO_CLASS_IMAGENET = get_imagenet_idx_to_class()
+CLASS_TO_IDX_IMAGENET = {v: k for k, v in IDX_TO_CLASS_IMAGENET.items()}
 
 def get_class_to_idx_imagenette() -> Dict[str, int]:
     return {
@@ -54,6 +56,23 @@ def get_class_to_idx_imagenette() -> Dict[str, int]:
             'parachute': 9
             }   
 
+def transform_imagenette_to_imagenet_indices(imagenette_indices: torch.Tensor) -> torch.Tensor:
+    # Mapping of ImageNet class names to their corresponding indices
+    imagenette_class_to_idx = get_class_to_idx_imagenette()
+    imagenette_idx_to_class = {v: k for k, v in imagenette_class_to_idx.items()}
+    
+    imagenet_indices = [CLASS_TO_IDX_IMAGENET[imagenette_idx_to_class[idx.item()]] for idx in imagenette_indices]
+
+    return torch.tensor(imagenet_indices)
+    
+# def transform_indices(original_indices, original_class_to_idx, new_class_to_idx):
+#     # Create a reverse mapping of original_class_to_idx to map indices back to their classes
+#     idx_to_class = {v: k for k, v in original_class_to_idx.items()}
+    
+#     # Transform the original indices to the new indices using the new mapping
+#     new_indices = [new_class_to_idx[idx_to_class[idx]] for idx in original_indices]
+    
+#     return torch.tensor(new_indices)
 
 def normalize_images(images: torch.Tensor, to_numpy: bool = True) -> torch.Tensor | np.ndarray:
     """
@@ -62,7 +81,7 @@ def normalize_images(images: torch.Tensor, to_numpy: bool = True) -> torch.Tenso
 
     :param images: Torch tensor of shape (batch, channels, height, width) or (channels, height, width).
     :param to_numpy: Whether to convert the result to a NumPy array. Defaults to True.
-    :returns: Normalized images as a Torch tensor or a NumPy array.
+    :returns: Normalized images as a Torch tensor or a NumPy array of shape (batch, height, width, channels).
     """
     if not torch.is_tensor(images):
         raise TypeError("Input must be a Torch tensor.")
@@ -158,15 +177,15 @@ def show_images(
 
 def download_imagenette():
     """
-    Downloads and extracts the Imagenette dataset safely.
+    Downloads and extracts the Imagenette dataset safely to the designated data directory.
     """
 
     # URL for the 320px version of Imagenette
     url = "https://s3.amazonaws.com/fast-ai-imageclas/imagenette2-320.tgz"
-    filename = "imagenette2-320.tgz"
-    extract_dir = "imagenette2-320"
+    filename = DATASETS_DIR / "imagenette2-320.tgz"
+    extract_dir = DATASETS_DIR / "imagenette2-320"
 
-    if os.path.exists(extract_dir):
+    if extract_dir.exists():
         print(f"{extract_dir} already exists. Skipping download.")
         return
 
@@ -175,27 +194,29 @@ def download_imagenette():
     response = requests.get(url, stream=True)
     response.raise_for_status()  # Ensure the request was successful
 
+    # Save the tar file to the datasets directory
     with open(filename, "wb") as file:
         for chunk in response.iter_content(chunk_size=1024):
             file.write(chunk)
 
-    # Safely extract the dataset
+    # Safely extract the dataset to DATASETS_DIR
     print("Extracting Imagenette...")
     with tarfile.open(filename, "r:gz") as tar:
         # Check for directory traversal
         for member in tar.getmembers():
-            member_path = os.path.join(".", member.name)
-            abs_directory = os.path.abspath(".")
+            member_path = os.path.join(DATASETS_DIR, member.name)
+            abs_directory = os.path.abspath(DATASETS_DIR)
             abs_target = os.path.abspath(member_path)
             if not os.path.commonpath([abs_directory, abs_target]) == abs_directory:
                 raise Exception(f"Attempted Path Traversal in Tar File: {member.name}")
-        
+
         # Extract files
-        tar.extractall(path=".")
+        tar.extractall(path=DATASETS_DIR)
 
     # Remove the tar file after extraction
-    os.remove(filename)
+    filename.unlink()
     print("Imagenette is ready!")
+
 
 
 def load_imagenette():
@@ -208,8 +229,8 @@ def load_imagenette():
     ])
 
     # Load train and validation datasets
-    train_dataset = datasets.ImageFolder(root='imagenette2-320/train', transform=transform)
-    val_dataset = datasets.ImageFolder(root='imagenette2-320/val', transform=transform)
+    train_dataset = datasets.ImageFolder(root=f"{str(DATASETS_DIR)}/imagenette2-320/train", transform=transform)
+    val_dataset = datasets.ImageFolder(root=f"{str(DATASETS_DIR)}/imagenette2-320/val", transform=transform)
 
     # WordNet ID (WNID) to human-readable class name mapping for ImageNet
     wnid_to_class = {
@@ -298,7 +319,7 @@ def load_local_images(image_paths: Union[str, List[str]], img_size: int = 224) -
 
     :param image_paths: Path to a single image or a list of image paths.
     :param img_size: The target size for resizing the images.
-    :return: Preprocessed image tensor(s) with batch dimension.
+    :return: Preprocessed image tensor(s) with batch dimension with shape (batch_size, 3, img_size, img_size).
     """
     # Define the transformations
     transforms_pipeline = transforms.Compose([
@@ -322,7 +343,6 @@ def load_local_images(image_paths: Union[str, List[str]], img_size: int = 224) -
     
     # Stack all image tensors to form a batch
     return torch.stack(images)  # Shape: [batch_size, 3, img_size, img_size]
-
 
 def generate_noisy_images(
     image: torch.Tensor, 
@@ -387,6 +407,7 @@ def noisy_image_linspace(image, magnitude, n, seed=None):
     :param magnitude: maximum perturbation magnitude
     :param n: number of samples to take
     :param seed: random seed
+    :return: a tensor of shape (n, C, H, W)
     """
     if seed is not None:
         torch.manual_seed(seed)
@@ -395,3 +416,39 @@ def noisy_image_linspace(image, magnitude, n, seed=None):
     noise = torch.randn_like(image) * magnitude
 
     return image_linspace(image, noise, n)
+
+def compute_classes_proportion_dataloder(loader):
+    labels = np.concatenate([y.numpy() for _, y in loader])
+    unique, counts = np.unique(labels, return_counts=True)
+    return unique, np.round(counts/len(labels),2)
+
+def load_model(model_name):
+    if model_name == "alexnet":
+        # return download_alexnet(f"{str(MODELS_DIR)}/alexnet_weights.pth")
+        return alexnet(weights=AlexNet_Weights.IMAGENET1K_V1)
+    elif model_name == "resnet50":
+        return resnet50(weights=ResNet50_Weights.IMAGENET1K_V1)
+    elif model_name == "swin_transformer":
+        return timm.create_model("swin_base_patch4_window7_224", pretrained=True)
+    elif model_name == "vit":
+        return timm.create_model('vit_tiny_patch16_224', pretrained=True)
+    else:
+        raise ValueError(f"Model {model_name} is not supported.")
+    
+def reshape_transform_swin_transformer(tensor, height=7, width=7):
+    result = tensor.reshape(tensor.size(0),
+                            height, width, tensor.size(2))
+
+    # Bring the channels to the first dimension,
+    # like in CNNs.
+    result = result.transpose(2, 3).transpose(1, 2)
+    return result
+
+def reshape_transform_vit(tensor, height=14, width=14):
+    result = tensor[:, 1:, :].reshape(tensor.size(0),
+                                      height, width, tensor.size(2))
+
+    # Bring the channels to the first dimension,
+    # like in CNNs.
+    result = result.transpose(2, 3).transpose(1, 2)
+    return result
