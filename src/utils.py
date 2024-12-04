@@ -9,6 +9,9 @@ from typing import Dict, Union, List
 from pathlib import Path
 from PIL import Image
 import random
+import tarfile
+import requests
+
 
 # Base directory for utils.py
 BASE_DIR = Path(__file__).resolve().parent
@@ -17,10 +20,8 @@ BASE_DIR = Path(__file__).resolve().parent
 FIGURES_DIR = BASE_DIR.parent / "figures"
 FIGURES_DIR.mkdir(parents=True, exist_ok=True)
 
+
 def get_imagenet_idx_to_class() -> Dict[int, str]:
-    import requests
-    import json
-    
     # URL for the ImageNet class-to-index mapping JSON file
     url = "https://storage.googleapis.com/download.tensorflow.org/data/imagenet_class_index.json"
 
@@ -38,6 +39,7 @@ def get_imagenet_idx_to_class() -> Dict[int, str]:
 
     return idx_to_class
 
+
 def get_class_to_idx_imagenette() -> Dict[str, int]:
     return {
             'tench': 0,
@@ -51,6 +53,7 @@ def get_class_to_idx_imagenette() -> Dict[str, int]:
             'golf_ball': 8,
             'parachute': 9
             }   
+
 
 def normalize_images(images: torch.Tensor, to_numpy: bool = True) -> torch.Tensor | np.ndarray:
     """
@@ -85,20 +88,23 @@ def normalize_images(images: torch.Tensor, to_numpy: bool = True) -> torch.Tenso
         return images.cpu().numpy()  # Ensure conversion is performed on CPU for efficiency
     else:
         return images
-    
+
+
 def show_images(
     images: torch.Tensor,
     labels: Union[list[str], None] = None,
     correct_match: Union[list[bool], None] = None, 
     save_fig: bool = False,
     filename: str = "images",
-):
+    ):
     """
     Displays a batch of images in a grid, optionally with labels and match indicators.
 
     :param images: Tensor of images with shape (batch_size, channels, height, width).
     :param labels: List of labels for each image, or None if no labels are provided.
     :param correct_match: List of booleans indicating match correctness, or None.
+    :param save_fig: Whether to save the figure as an image file. Defaults to False.
+    :param filename: Name of the file to save the figure as. Defaults to "images".
     """
     images = images.float()
 
@@ -154,10 +160,7 @@ def download_imagenette():
     """
     Downloads and extracts the Imagenette dataset safely.
     """
-    
-    import requests
-    import tarfile
-    
+
     # URL for the 320px version of Imagenette
     url = "https://s3.amazonaws.com/fast-ai-imageclas/imagenette2-320.tgz"
     filename = "imagenette2-320.tgz"
@@ -234,6 +237,7 @@ def load_imagenette():
 
     return train_loader, val_loader
 
+
 def plot_images(images):
     grid = torchvision.utils.make_grid(images, nrow=8, padding=2)
     plt.figure(figsize=(20, 20))
@@ -241,9 +245,10 @@ def plot_images(images):
     plt.axis("off")
     plt.show()
 
+
 def plot_class_examples(dataloader: DataLoader, 
-                        save_fig: bool =False,
-                        filename: str ="class_examples"
+                        save_fig: bool = False,
+                        filename: str = "class_examples"
                         ):
     # Extract the class-to-index mapping
     class_to_idx = dataloader.dataset.class_to_idx
@@ -286,6 +291,7 @@ def plot_class_examples(dataloader: DataLoader,
         plt.show()
     plt.close()
 
+
 def load_local_images(image_paths: Union[str, List[str]], img_size: int = 224) -> torch.Tensor:
     """
     Loads and preprocesses one or multiple images for model inference.
@@ -316,6 +322,7 @@ def load_local_images(image_paths: Union[str, List[str]], img_size: int = 224) -
     
     # Stack all image tensors to form a batch
     return torch.stack(images)  # Shape: [batch_size, 3, img_size, img_size]
+
 
 def generate_noisy_images(
     image: torch.Tensor, 
@@ -351,6 +358,7 @@ def generate_noisy_images(
 
     return noisy_images
 
+
 def set_seed(seed):
     """Sets the seed for Python, NumPy, and PyTorch to ensure reproducibility."""
     random.seed(seed)
@@ -359,3 +367,31 @@ def set_seed(seed):
     torch.cuda.manual_seed(seed)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
+
+
+def image_linspace(image, noise, n=100):
+    """
+    image: a tensor
+    noise: a tensor of the same shape
+    n: number of samples to take
+    """
+    t = torch.linspace(0, 1, n).view(-1, 1, 1, 1)
+    segment = image + t * noise
+    segment = torch.clamp(segment, min=0, max=1)
+    return segment
+
+
+def noisy_image_linspace(image, magnitude, n, seed=None):
+    """
+    :param image: a tensor
+    :param magnitude: maximum perturbation magnitude
+    :param n: number of samples to take
+    :param seed: random seed
+    """
+    if seed is not None:
+        torch.manual_seed(seed)
+
+    # choose a random direction
+    noise = torch.randn_like(image) * magnitude
+
+    return image_linspace(image, noise, n)
