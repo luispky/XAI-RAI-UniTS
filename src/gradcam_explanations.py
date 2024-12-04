@@ -32,12 +32,11 @@ def gradcam_explanations_classifier_series(
     model: nn.Module,
     perturbed_images: torch.Tensor,
     class_label_imagenet: str = "chain_saw",
-    target_layers: Optional[List[nn.Module]] = None,
+    target_layers: Optional[List[Union[nn.Module, nn.Sequential]]] = None,
     method: str = "GradCAM",
     predicted_labels: bool = False,
     reshape_transform: Optional[Callable] = None,
-    # The function returns either a tuple or a single tensor
-) -> Union[torch.Tensor, Tuple[torch.Tensor, List[str]]]:
+) -> Union[torch.Tensor, Tuple[torch.Tensor, Optional[List[str]]]]:
     """
     Produces GradCAM explanations for a series of perturbed images of a given ImageNet class.
 
@@ -46,9 +45,10 @@ def gradcam_explanations_classifier_series(
     :param class_label_imagenet: The ImageNet class label (e.g., "chain_saw").
     :param target_layers: List of model layers to use for generating Grad-CAM explanations.
     :param method: The GradCAM method to use (e.g., "GradCAM", "GradCAM++").
+    :param predicted_labels: Whether to return predicted labels.
+    :param reshape_transform: Optional reshape function for transformers.
     
     :return: A Tensor of images with GradCAM explanations overlayed.
-    :raises ValueError: If invalid method or class label is provided.
     """
     # Validate the method
     if method not in METHODS:
@@ -84,15 +84,21 @@ def gradcam_explanations_classifier_series(
         grayscale_cam = cam(input_tensor=perturbed_images, targets=targets)
 
         # Overlay heatmaps onto normalized images
-        imgs_overlay_cam = torch.tensor(
-            np.array([show_cam_on_image(img, cam, use_rgb=True) for img, cam in zip(imgs_normalized, grayscale_cam)])
+        imgs_overlay_cam = torch.Tensor(
+            np.array(
+                [show_cam_on_image(img.numpy(), cam, use_rgb=True) for img, cam in zip(imgs_normalized, grayscale_cam)]
+                )
         )
         
-        # Return predicted labels if requested
+        # Check for predicted labels
         if predicted_labels:
-            predictions = cam.outputs.argmax(dim=1).to(torch.int32)
-            pred_labels = [IDX_TO_CLASS_IMAGENET[idx.item()] for idx in predictions]    
+            # Ensure Grad-CAM outputs predictions (forward pass required)
+            outputs = cam.outputs  # Check if `outputs` exists in the GradCAM implementation
+            if outputs is None:
+                raise ValueError("Grad-CAM outputs are not available for label prediction.")
+            predictions = outputs.argmax(dim=1).to(torch.int32)
+            pred_labels = [IDX_TO_CLASS_IMAGENET[idx.item()] for idx in predictions]
             
             return imgs_overlay_cam, pred_labels
 
-    return imgs_overlay_cam
+    return imgs_overlay_cam, None

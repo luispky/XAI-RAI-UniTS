@@ -1,11 +1,12 @@
 import os
+from click import Option
 import numpy as np
 import torch
 import torchvision
 import matplotlib.pyplot as plt
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
-from typing import Dict, Union, List
+from typing import Dict, Union, List, Optional
 from pathlib import Path
 from PIL import Image
 import random
@@ -60,7 +61,7 @@ def transform_imagenette_to_imagenet_indices(imagenette_indices: torch.Tensor) -
     imagenette_class_to_idx = get_class_to_idx_imagenette()
     imagenette_idx_to_class = {v: k for k, v in imagenette_class_to_idx.items()}
     
-    imagenet_indices = [CLASS_TO_IDX_IMAGENET[imagenette_idx_to_class[idx.item()]] for idx in imagenette_indices]
+    imagenet_indices = [CLASS_TO_IDX_IMAGENET[imagenette_idx_to_class[int(idx.item())]] for idx in imagenette_indices]
 
     return torch.tensor(imagenet_indices)
     
@@ -110,7 +111,7 @@ def normalize_images(images: torch.Tensor, to_numpy: bool = True) -> torch.Tenso
 
 def show_images(
     images: torch.Tensor,
-    labels: Union[list[str], None] = None,
+    labels: Optional[List[str]] = None,
     correct_match: Union[list[bool], None] = None, 
     save_fig: bool = False,
     filename: str = "images",
@@ -267,11 +268,11 @@ def plot_images(images):
 
 
 def plot_class_examples(dataloader: DataLoader, 
+                        class_to_idx: Dict[str, int],
                         save_fig: bool = False,
                         filename: str = "class_examples"
                         ):
-    # Extract the class-to-index mapping
-    class_to_idx = dataloader.dataset.class_to_idx
+
     idx_to_class = {value: key for key, value in class_to_idx.items()}
     class_names = [idx_to_class[i] for i in range(len(class_to_idx))]
     
