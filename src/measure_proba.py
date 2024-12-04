@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+from src.utils import noisy_image_linspace
 
 
 class MeasureProba:
@@ -18,16 +19,7 @@ class MeasureProba:
         image: a tensor of shape (3, 224, 224)
         n: number of samples to take
         """
-        if seed is not None:
-            torch.manual_seed(seed)
-
-        # choose a random direction
-        direction = torch.randn_like(image)
-
-        # build the segment
-        t = torch.linspace(0, magnitude, n).view(-1, 1, 1, 1)
-        segment = image + t * direction
-        segment = torch.clamp(segment, min=0, max=1)
+        segment = noisy_image_linspace(image, magnitude, n, seed=seed)
 
         # run the model on the segment
         with torch.no_grad():
