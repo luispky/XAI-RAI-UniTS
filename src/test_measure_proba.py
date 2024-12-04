@@ -1,14 +1,22 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import torch
+import sys
 from measure_proba import MeasureProba
 from alexnet import download_alexnet, load_images, load_labels
-from src.paths import MODELS_DIR, IMAGE_DIR, LABELS_PATH
+
+from pathlib import Path
+
+# Add src directory to Python path
+PARENT_DIRECTORY = str(Path(__file__).resolve().parent.parent)
+sys.path.append(PARENT_DIRECTORY + "/src")
+
+from paths import MODELS_DIR, IMAGE_DIR, LABELS_PATH
 
 
-def test(model_path=f"{MODELS_DIR}\\alexnet_weights.pth",
-         image_dir=IMAGE_DIR,
-         label_path=LABELS_PATH,
+def test(model_path=f"{str(MODELS_DIR)}/alexnet_weights.pth",# !MODELS_DIR IS A PATH OBJECT, NOT A STRING
+         image_dir=IMAGE_DIR, # !IMAGE_DIR IS ALREADY A STRING
+         label_path=LABELS_PATH, # !LABELS_PATH IS ALREADY A STRING
          magnitude=.1, n=40,
          seed=14):
     np.random.seed(seed)

@@ -1,3 +1,12 @@
-MODELS_DIR = "..\\models"
-IMAGE_DIR = "..\\data\\images"
-LABELS_PATH = '..\\data\\imagenet_classes.txt'
+from pathlib import Path
+
+# Base directory for utils.py
+BASE_DIR = Path(__file__).resolve().parent
+
+# Paths for saving results
+MODELS_DIR = BASE_DIR.parent / "models"
+MODELS_DIR.mkdir(parents=True, exist_ok=True)
+IMAGE_DIR = str(BASE_DIR.parent / "data/images")
+# IMAGE_DIR.mkdir(parents=True, exist_ok=True) # Makes no sense because the directory is already created
+LABELS_PATH = str(BASE_DIR.parent / "data/imagenet_classes.txt")
+# LABELS_PATH.mkdir(parents=True, exist_ok=True) # Makes no sense because this is a path to a file
