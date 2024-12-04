@@ -32,7 +32,7 @@ def main():
     show_images(noisy_images, save_fig=True, filename=f"noisy_{filename.split(".")[0]}.png")
 
     # Load model
-    model_name='resnet50' 
+    model_name='alexnet' 
     model = load_model(model_name)
     
     # Target layers for Grad-CAM
