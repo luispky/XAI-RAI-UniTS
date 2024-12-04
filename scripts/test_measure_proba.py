@@ -25,13 +25,13 @@ def test(model_path=f"{str(MODELS_DIR)}/alexnet_weights.pth",  # !MODELS_DIR IS 
     fig, ax = plt.subplots(nrows=2, ncols=2)
     
     # Omar's test
-    image = load_images(image_dir, n=1)[0]
-    model = download_alexnet(model_path)
+    # image = load_images(image_dir, n=1)[0]
+    # model = download_alexnet(model_path)
     
     # # Luis's test
-    # image_path = IMAGE_DIR + "/cassette_player.jpg"
-    # image = load_local_images(image_path)[0] # remove the batch dimension
-    # model = load_model('resnet50')
+    filename = "cassette_player.jpg"
+    image = load_local_images(image_dir + "/" + filename)[0] # remove the batch dimension
+    model = load_model('resnet50')
 
     labels = load_labels(label_path)
     
