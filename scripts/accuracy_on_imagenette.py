@@ -4,17 +4,11 @@ import torch
 import numpy as np
 from sklearn.metrics import accuracy_score
 
-from pathlib import Path
-
-# Add src directory to Python path
-PARENT_DIRECTORY = str(Path(__file__).resolve().parent.parent)
-sys.path.append(PARENT_DIRECTORY + "/src")
-
-from utils import download_imagenette, load_imagenette
-from utils import IDX_TO_CLASS_IMAGENET
-from utils import transform_imagenette_to_imagenet_indices
-from utils import load_model
-from paths import RESULTS_DIR
+from src.utils import download_imagenette, load_imagenette
+from src.utils import IDX_TO_CLASS_IMAGENET
+from src.utils import transform_imagenette_to_imagenet_indices
+from src.utils import load_model
+from src.paths import RESULTS_DIR
 
 def main():
     # Load Imagenette test set

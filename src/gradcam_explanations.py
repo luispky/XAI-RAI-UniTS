@@ -17,7 +17,7 @@ from pytorch_grad_cam import (
 from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
 from pytorch_grad_cam.utils.image import show_cam_on_image
 
-from utils import normalize_images, CLASS_TO_IDX_IMAGENET, IDX_TO_CLASS_IMAGENET
+from src.utils import normalize_images, CLASS_TO_IDX_IMAGENET, IDX_TO_CLASS_IMAGENET
 
 # Supported Grad-CAM methods
 METHODS = {
@@ -48,7 +48,7 @@ def gradcam_explanations_classifier_series(
     :param predicted_labels: Whether to return predicted labels.
     :param reshape_transform: Optional reshape function for transformers.
     
-    :return: A Tensor of images with GradCAM explanations overlayed.
+    :return: A Tensor of images with GradCAM explanations overlayed and optionally predicted labels as a list of strings.
     """
     # Validate the method
     if method not in METHODS:
@@ -86,11 +86,12 @@ def gradcam_explanations_classifier_series(
         # Overlay heatmaps onto normalized images
         imgs_overlay_cam = torch.Tensor(
             np.array(
-                [show_cam_on_image(img.numpy(), cam, use_rgb=True) for img, cam in zip(imgs_normalized, grayscale_cam)]
-                )
+                [show_cam_on_image(img, cam, use_rgb=True) for img, cam in zip(imgs_normalized, grayscale_cam)]
+            )
         )
         
         # Check for predicted labels
+        pred_labels = None
         if predicted_labels:
             # Ensure Grad-CAM outputs predictions (forward pass required)
             outputs = cam.outputs  # Check if `outputs` exists in the GradCAM implementation
@@ -98,7 +99,5 @@ def gradcam_explanations_classifier_series(
                 raise ValueError("Grad-CAM outputs are not available for label prediction.")
             predictions = outputs.argmax(dim=1).to(torch.int32)
             pred_labels = [IDX_TO_CLASS_IMAGENET[idx.item()] for idx in predictions]
-            
-            return imgs_overlay_cam, pred_labels
 
-    return imgs_overlay_cam, None
+    return imgs_overlay_cam, pred_labels

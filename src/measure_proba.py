@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-from utils import noisy_image_linspace
+from src.utils import noisy_image_linspace
 
 
 class MeasureProba:

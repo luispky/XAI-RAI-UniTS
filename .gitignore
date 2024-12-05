@@ -4,6 +4,10 @@ __pycache__/
 # venv
 venv/
 .venv/
+.env/
+
+# VSCode
+.vscode/
 
 # Imagenette dataset
 imagenette2-320.tgz

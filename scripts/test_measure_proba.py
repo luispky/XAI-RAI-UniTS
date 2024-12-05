@@ -1,19 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import torch
-import sys
 
-from pathlib import Path
-
-# Add src directory to Python path
-PARENT_DIRECTORY = str(Path(__file__).resolve().parent.parent)
-sys.path.append(PARENT_DIRECTORY + "/src")
-
-from paths import MODELS_DIR, IMAGE_DIR, LABELS_PATH
-from measure_proba import MeasureProba
-from alexnet import download_alexnet, load_images, load_labels
-
-from utils import load_local_images, load_model
+from src.paths import MODELS_DIR, IMAGE_DIR, LABELS_PATH
+from src.measure_proba import MeasureProba
+from src.alexnet import download_alexnet, load_images, load_labels
+from src.utils import load_local_images, load_model
 
 def test(model_path=f"{str(MODELS_DIR)}/alexnet_weights.pth",  # !MODELS_DIR IS A PATH OBJECT, NOT A STRING
          image_dir=IMAGE_DIR, # !IMAGE_DIR IS ALREADY A STRING

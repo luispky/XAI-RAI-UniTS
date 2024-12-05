@@ -1,16 +1,11 @@
 import sys
-from pathlib import Path
 
-# Add src directory to Python path
-PARENT_DIRECTORY = str(Path(__file__).resolve().parent.parent)
-sys.path.append(PARENT_DIRECTORY + "/src")
-
-from gradcam_explanations import gradcam_explanations_classifier_series
-from utils import load_local_images, load_model, show_images
-from utils import generate_noisy_images, noisy_image_linspace
-from utils import set_seed
-from paths import IMAGE_DIR
-from utils import reshape_transform_swin_transformer, reshape_transform_vit
+from src.gradcam_explanations import gradcam_explanations_classifier_series
+from src.utils import load_local_images, load_model, show_images
+from src.utils import generate_noisy_images, noisy_image_linspace
+from src.utils import set_seed
+from src.paths import IMAGE_DIR
+from src.utils import reshape_transform_swin_transformer, reshape_transform_vit
 
 def main():
     # Set seed for reproducibility

@@ -1,5 +1,4 @@
 import os
-from click import Option
 import numpy as np
 import torch
 import torchvision
@@ -16,9 +15,8 @@ from torchvision.models import resnet50, ResNet50_Weights
 from torchvision.models import alexnet, AlexNet_Weights
 import timm
 
-from paths import MODELS_DIR, FIGURES_DIR, DATASETS_DIR
-from alexnet import download_alexnet
-
+from src.paths import MODELS_DIR, FIGURES_DIR, DATASETS_DIR
+from src.alexnet import download_alexnet
 
 def get_imagenet_idx_to_class() -> Dict[int, str]:
     # URL for the ImageNet class-to-index mapping JSON file
@@ -64,17 +62,8 @@ def transform_imagenette_to_imagenet_indices(imagenette_indices: torch.Tensor) -
     imagenet_indices = [CLASS_TO_IDX_IMAGENET[imagenette_idx_to_class[int(idx.item())]] for idx in imagenette_indices]
 
     return torch.tensor(imagenet_indices)
-    
-# def transform_indices(original_indices, original_class_to_idx, new_class_to_idx):
-#     # Create a reverse mapping of original_class_to_idx to map indices back to their classes
-#     idx_to_class = {v: k for k, v in original_class_to_idx.items()}
-    
-#     # Transform the original indices to the new indices using the new mapping
-#     new_indices = [new_class_to_idx[idx_to_class[idx]] for idx in original_indices]
-    
-#     return torch.tensor(new_indices)
 
-def normalize_images(images: torch.Tensor, to_numpy: bool = True) -> torch.Tensor | np.ndarray:
+def normalize_images(images: torch.Tensor) -> np.ndarray:
     """
     Normalizes a Torch image or a batch of images to be in the range [0, 1] 
     and optionally converts to a NumPy array.
@@ -103,19 +92,15 @@ def normalize_images(images: torch.Tensor, to_numpy: bool = True) -> torch.Tenso
     elif images.dim() == 3:  # Single image
         images = images.permute(1, 2, 0)  # (H, W, C)
 
-    if to_numpy:
-        return images.cpu().numpy()  # Ensure conversion is performed on CPU for efficiency
-    else:
-        return images
-
+    return images.cpu().numpy()  # Ensure conversion is performed on CPU for efficiency
 
 def show_images(
     images: torch.Tensor,
-    labels: Optional[List[str]] = None,
+    labels: Optional[Union[List[str], torch.Tensor]] = None,
     correct_match: Union[list[bool], None] = None, 
     save_fig: bool = False,
     filename: str = "images",
-    ):
+):
     """
     Displays a batch of images in a grid, optionally with labels and match indicators.
 
@@ -131,16 +116,22 @@ def show_images(
     if images.size(3) == 3:  # If channel is last, move it to first
         images = images.permute(0, 3, 1, 2)
 
-    # Create a grid of images
+    # Normalize and create a grid of images
     grid_img = torchvision.utils.make_grid(images, nrow=8, padding=2, normalize=True)
     npimg = grid_img.permute(1, 2, 0).numpy()  # Rearrange to (H, W, C) format
+
+    # Normalize labels
+    if isinstance(labels, torch.Tensor):
+        labels = [str(label.item()) for label in labels]
+    elif labels is None:
+        labels = []
 
     # Plot the images
     fig, ax = plt.subplots(figsize=(12, 8))
     ax.imshow(npimg)
     ax.axis("off")
 
-    if labels is not None:
+    if labels:
         n_images = images.size(0)  # Number of images in the batch
         nrow = 8  # Number of images per row in the grid
         img_size = images.size(2) + 2  # Adjust based on padding
@@ -151,7 +142,7 @@ def show_images(
             x_pos = col * img_size + img_size // 2 + 1
             y_pos = row * img_size
 
-            label_text = labels[i] if labels else "No Label"
+            label_text = labels[i] if i < len(labels) else "No Label"
             color = (
                 "white" if correct_match is None
                 else ("green" if correct_match[i] else "red")
@@ -173,7 +164,6 @@ def show_images(
         plt.savefig(filepath)
     plt.show()
     plt.close()
-    
 
 def download_imagenette():
     """
