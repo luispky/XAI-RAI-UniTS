@@ -1,5 +1,3 @@
-import sys
-
 from src.gradcam_explanations import gradcam_explanations_classifier_series
 from src.utils import load_local_images, load_model, show_images
 from src.utils import generate_noisy_images, noisy_image_linspace

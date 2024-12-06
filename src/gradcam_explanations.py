@@ -1,10 +1,6 @@
-#!/usr/bin/env python
-
-import os
 import torch
-import torchvision
 import torch.nn as nn
-from typing import Dict, Union, List, Optional, Callable, Tuple
+from typing import Union, List, Optional, Callable, Tuple
 import numpy as np
 
 from pytorch_grad_cam import (

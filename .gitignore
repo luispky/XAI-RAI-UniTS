@@ -23,3 +23,5 @@ tabular_datasets/
 
 # Where models are saved
 models/
+/experiments/
+/.vscode/
