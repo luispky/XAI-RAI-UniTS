@@ -3,6 +3,7 @@ Use gradcam_explanations_classifier on a sequence of increasingly noisy images.
 """
 from xai_rai_units.src.gradcam_explanations import gradcam_explanations_classifier_series
 from xai_rai_units.src.paths import IMAGE_DIR
+from xai_rai_units.src.perturbations import noisy_image_linspace
 from xai_rai_units.src import utils
 
 
@@ -19,7 +20,7 @@ def main(n_images=16, magnitude=.1, seed=42):
     preprocessed_image = utils.load_local_images(image_path)
 
     # Generate a sequence of noisy images
-    noisy_images = utils.noisy_image_linspace(preprocessed_image, magnitude, n_images)
+    noisy_images = noisy_image_linspace(preprocessed_image, magnitude, n_images)
 
     utils.show_images(noisy_images, save_fig=True, filename=f"noisy_{filename.split(".")[0]}.png")
 

@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-from xai_rai_units.src.utils import noisy_image_linspace
+from xai_rai_units.src.perturbations import noisy_image_linspace
 
 
 class MeasureProba:
