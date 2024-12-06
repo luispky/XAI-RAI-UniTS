@@ -1,23 +1,16 @@
+# todo why #!/usr/bin/env python ?
 #!/usr/bin/env python
-
-import os
 import torch
-import torchvision
 import torch.nn as nn
-from typing import Dict, Union, List, Optional, Callable, Tuple
+from typing import Union, List, Optional, Callable, Tuple
 import numpy as np
 
-from pytorch_grad_cam import (
-    GradCAM,
-    GradCAMPlusPlus,
-    XGradCAM,
-    EigenCAM,
-    HiResCAM,
-)
+from pytorch_grad_cam import GradCAM, GradCAMPlusPlus, XGradCAM, EigenCAM, HiResCAM
 from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
 from pytorch_grad_cam.utils.image import show_cam_on_image
 
-from src.utils import normalize_images, CLASS_TO_IDX_IMAGENET, IDX_TO_CLASS_IMAGENET
+from xai_rai_units.src.utils import normalize_images, CLASS_TO_IDX_IMAGENET, IDX_TO_CLASS_IMAGENET
+
 
 # Supported Grad-CAM methods
 METHODS = {
@@ -28,14 +21,15 @@ METHODS = {
     "HiResCAM": HiResCAM,
 }
 
+
 def gradcam_explanations_classifier_series(
-    model: nn.Module,
-    perturbed_images: torch.Tensor,
-    class_label_imagenet: str = "chain_saw",
-    target_layers: Optional[List[Union[nn.Module, nn.Sequential]]] = None,
-    method: str = "GradCAM",
-    predicted_labels: bool = False,
-    reshape_transform: Optional[Callable] = None,
+        model: nn.Module,
+        perturbed_images: torch.Tensor,
+        class_label_imagenet: str = "chain_saw",
+        target_layers: Optional[List[Union[nn.Module, nn.Sequential]]] = None,
+        method: str = "GradCAM",
+        predicted_labels: bool = False,
+        reshape_transform: Optional[Callable] = None,
 ) -> Union[torch.Tensor, Tuple[torch.Tensor, Optional[List[str]]]]:
     """
     Produces GradCAM explanations for a series of perturbed images of a given ImageNet class.
@@ -48,7 +42,8 @@ def gradcam_explanations_classifier_series(
     :param predicted_labels: Whether to return predicted labels.
     :param reshape_transform: Optional reshape function for transformers.
     
-    :return: A Tensor of images with GradCAM explanations overlayed and optionally predicted labels as a list of strings.
+    :return: A Tensor of images with GradCAM explanations overlayed
+             and optionally predicted labels as a list of strings.
     """
     # Validate the method
     if method not in METHODS:
@@ -56,7 +51,7 @@ def gradcam_explanations_classifier_series(
 
     # Preprocess the class label
     class_label_imagenet = class_label_imagenet.lower().split(".")[0]
-    
+
     # Validate class label
     if class_label_imagenet not in CLASS_TO_IDX_IMAGENET:
         raise ValueError(f"Invalid class label '{class_label_imagenet}'. Please provide a valid ImageNet class label.")
@@ -89,7 +84,7 @@ def gradcam_explanations_classifier_series(
                 [show_cam_on_image(img, cam, use_rgb=True) for img, cam in zip(imgs_normalized, grayscale_cam)]
             )
         )
-        
+
         # Check for predicted labels
         pred_labels = None
         if predicted_labels:
