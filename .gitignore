@@ -1,5 +1,16 @@
-# Ignore Python cache files
+# Project-related
+data/
+figures/
+models/
+results/
+imagenette2-320.tgz
+imagenette2-320/
+experiments/
+tabular_datasets/
+
+# Pycharm
 __pycache__/
+.idea/
 
 # venv
 venv/
@@ -8,20 +19,3 @@ venv/
 
 # VSCode
 .vscode/
-
-# Imagenette dataset
-imagenette2-320.tgz
-imagenette2-320/
-
-# Experiments
-experiments/
-
-# Tabular datasets
-tabular_datasets/
-
-.idea/
-
-# Where models are saved
-models/
-/experiments/
-/.vscode/

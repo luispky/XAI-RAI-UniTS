@@ -6,7 +6,6 @@ import matplotlib.pyplot as plt
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
 from typing import Dict, Union, List, Optional
-from pathlib import Path
 from PIL import Image
 import random
 import tarfile
@@ -15,16 +14,19 @@ from torchvision.models import resnet50, ResNet50_Weights
 from torchvision.models import alexnet, AlexNet_Weights
 import timm
 
-from src.paths import MODELS_DIR, FIGURES_DIR, DATASETS_DIR
-from src.alexnet import download_alexnet
+from xai_rai_units.src.paths import FIGURES_DIR, DATASETS_DIR
+
 
 def get_imagenet_idx_to_class() -> Dict[int, str]:
+    """
+    # TODO comment input-output
+    """
     # URL for the ImageNet class-to-index mapping JSON file
     url = "https://storage.googleapis.com/download.tensorflow.org/data/imagenet_class_index.json"
 
     # Send a GET request to download the file
     response = requests.get(url)
-    
+
     # Check for successful request
     response.raise_for_status()
 
@@ -36,32 +38,42 @@ def get_imagenet_idx_to_class() -> Dict[int, str]:
 
     return idx_to_class
 
+
 # Class-to-Index and Index-to-Class mappings for ImageNet
 IDX_TO_CLASS_IMAGENET = get_imagenet_idx_to_class()
 CLASS_TO_IDX_IMAGENET = {v: k for k, v in IDX_TO_CLASS_IMAGENET.items()}
 
+
 def get_class_to_idx_imagenette() -> Dict[str, int]:
+    """
+    # TODO comment input-output
+    """
     return {
-            'tench': 0,
-            'english_springer': 1,
-            'cassette_player': 2,
-            'chain_saw': 3,
-            'church': 4,
-            'french_horn': 5,
-            'garbage_truck': 6,
-            'gas_pump': 7,
-            'golf_ball': 8,
-            'parachute': 9
-            }   
+        'tench': 0,
+        'english_springer': 1,
+        'cassette_player': 2,
+        'chain_saw': 3,
+        'church': 4,
+        'french_horn': 5,
+        'garbage_truck': 6,
+        'gas_pump': 7,
+        'golf_ball': 8,
+        'parachute': 9
+    }
+
 
 def transform_imagenette_to_imagenet_indices(imagenette_indices: torch.Tensor) -> torch.Tensor:
+    """
+    # TODO comment input-output
+    """
     # Mapping of ImageNet class names to their corresponding indices
     imagenette_class_to_idx = get_class_to_idx_imagenette()
     imagenette_idx_to_class = {v: k for k, v in imagenette_class_to_idx.items()}
-    
+
     imagenet_indices = [CLASS_TO_IDX_IMAGENET[imagenette_idx_to_class[int(idx.item())]] for idx in imagenette_indices]
 
     return torch.tensor(imagenet_indices)
+
 
 def normalize_images(images: torch.Tensor) -> np.ndarray:
     """
@@ -69,12 +81,11 @@ def normalize_images(images: torch.Tensor) -> np.ndarray:
     and optionally converts to a NumPy array.
 
     :param images: Torch tensor of shape (batch, channels, height, width) or (channels, height, width).
-    :param to_numpy: Whether to convert the result to a NumPy array. Defaults to True.
     :returns: Normalized images as a Torch tensor or a NumPy array of shape (batch, height, width, channels).
     """
     if not torch.is_tensor(images):
         raise TypeError("Input must be a Torch tensor.")
-    
+
     if images.dim() not in [3, 4]:
         raise ValueError("Input tensor must have 3 or 4 dimensions (C, H, W) or (B, C, H, W).")
 
@@ -94,12 +105,13 @@ def normalize_images(images: torch.Tensor) -> np.ndarray:
 
     return images.cpu().numpy()  # Ensure conversion is performed on CPU for efficiency
 
+
 def show_images(
-    images: torch.Tensor,
-    labels: Optional[Union[List[str], torch.Tensor]] = None,
-    correct_match: Union[list[bool], None] = None, 
-    save_fig: bool = False,
-    filename: str = "images",
+        images: torch.Tensor,
+        labels: Optional[Union[List[str], torch.Tensor]] = None,
+        correct_match: Union[list[bool], None] = None,
+        save_fig: bool = False,
+        filename: str = "images",
 ):
     """
     Displays a batch of images in a grid, optionally with labels and match indicators.
@@ -165,6 +177,7 @@ def show_images(
     plt.show()
     plt.close()
 
+
 def download_imagenette():
     """
     Downloads and extracts the Imagenette dataset safely to the designated data directory.
@@ -208,13 +221,14 @@ def download_imagenette():
     print("Imagenette is ready!")
 
 
-
 def load_imagenette():
-
+    """
+    # TODO comment input-output + consider adding wnid_to_class to file
+    """
     # Define transformations
     transform = transforms.Compose([
         transforms.Resize((224, 224)),  # Resize images to 224x224
-        transforms.ToTensor(),          # Convert to Tensor
+        transforms.ToTensor(),  # Convert to Tensor
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),  # Normalize
     ])
 
@@ -250,6 +264,9 @@ def load_imagenette():
 
 
 def plot_images(images):
+    """
+    # TODO comment input
+    """
     grid = torchvision.utils.make_grid(images, nrow=8, padding=2)
     plt.figure(figsize=(20, 20))
     plt.imshow(np.transpose(grid, (1, 2, 0)))
@@ -257,15 +274,17 @@ def plot_images(images):
     plt.show()
 
 
-def plot_class_examples(dataloader: DataLoader, 
+def plot_class_examples(dataloader: DataLoader,
                         class_to_idx: Dict[str, int],
                         save_fig: bool = False,
                         filename: str = "class_examples"
                         ):
-
+    """
+    # TODO comment input
+    """
     idx_to_class = {value: key for key, value in class_to_idx.items()}
     class_names = [idx_to_class[i] for i in range(len(class_to_idx))]
-    
+
     # Dictionary to store one example per class
     class_examples = {class_name: None for class_name in class_names}
 
@@ -279,7 +298,7 @@ def plot_class_examples(dataloader: DataLoader,
                 image_np = img.permute(1, 2, 0).numpy()  # Convert tensor to numpy array
                 image_np = (image_np - image_np.min()) / (image_np.max() - image_np.min())  # Scale to [0, 1]
                 class_examples[class_name] = image_np
-            
+
             # Stop iteration if all classes have been captured
             if all(example is not None for example in class_examples.values()):
                 break
@@ -317,27 +336,28 @@ def load_local_images(image_paths: Union[str, List[str]], img_size: int = 224) -
         transforms.ToTensor(),  # Convert image to tensor
         transforms.Normalize(
             mean=[0.485, 0.456, 0.406],  # Normalize using ImageNet mean
-            std=[0.229, 0.224, 0.225],   # Normalize using ImageNet std
+            std=[0.229, 0.224, 0.225],  # Normalize using ImageNet std
         ),
     ])
-    
+
     # Ensure image_paths is a list
     if isinstance(image_paths, str):
         image_paths = [image_paths]
-    
+
     # Load and preprocess each image
     images = []
     for image_path in image_paths:
         image = Image.open(image_path).convert("RGB")  # Ensure RGB format
         images.append(transforms_pipeline(image))
-    
+
     # Stack all image tensors to form a batch
     return torch.stack(images)  # Shape: [batch_size, 3, img_size, img_size]
 
+
 def generate_noisy_images(
-    image: torch.Tensor, 
-    n_images: int, 
-    magnitude: float
+        image: torch.Tensor,
+        n_images: int,
+        magnitude: float
 ) -> torch.Tensor:
     """
     Generates a sequence of noisy images following the formula:
@@ -407,12 +427,20 @@ def noisy_image_linspace(image, magnitude, n, seed=None):
 
     return image_linspace(image, noise, n)
 
+
 def compute_classes_proportion_dataloder(loader):
+    """
+    # TODO comment input-output
+    """
     labels = np.concatenate([y.numpy() for _, y in loader])
     unique, counts = np.unique(labels, return_counts=True)
-    return unique, np.round(counts/len(labels),2)
+    return unique, np.round(counts / len(labels), 2)
+
 
 def load_model(model_name):
+    """
+    # TODO comment input-output
+    """
     if model_name == "alexnet":
         # return download_alexnet(f"{str(MODELS_DIR)}/alexnet_weights.pth")
         return alexnet(weights=AlexNet_Weights.IMAGENET1K_V1)
@@ -424,8 +452,12 @@ def load_model(model_name):
         return timm.create_model('vit_tiny_patch16_224', pretrained=True)
     else:
         raise ValueError(f"Model {model_name} is not supported.")
-    
+
+
 def reshape_transform_swin_transformer(tensor, height=7, width=7):
+    """
+    # TODO comment input-output input-output
+    """
     result = tensor.reshape(tensor.size(0),
                             height, width, tensor.size(2))
 
@@ -434,10 +466,13 @@ def reshape_transform_swin_transformer(tensor, height=7, width=7):
     result = result.transpose(2, 3).transpose(1, 2)
     return result
 
+
 def reshape_transform_vit(tensor, height=14, width=14):
+    """
+    # TODO comment input-output input-output
+    """
     result = tensor[:, 1:, :].reshape(tensor.size(0),
                                       height, width, tensor.size(2))
-
     # Bring the channels to the first dimension,
     # like in CNNs.
     result = result.transpose(2, 3).transpose(1, 2)

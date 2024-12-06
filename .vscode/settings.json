@@ -1,5 +1,0 @@
-{
-    "docwriter.style": "Auto-detect",
-    "python.pythonPath": "/home/l11/miniconda3/envs/DL/bin/python",
-    "python.envFile": "${workspaceFolder}/.env"
-}

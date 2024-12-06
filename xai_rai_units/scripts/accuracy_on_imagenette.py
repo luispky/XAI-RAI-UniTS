@@ -1,16 +1,21 @@
-# Test the accuracy of resnet50 on the test set of Imagenette
-import sys
+"""
+Test the accuracy of resnet50 on the test set of Imagenette
+"""
 import torch
-import numpy as np
 from sklearn.metrics import accuracy_score
 
-from src.utils import download_imagenette, load_imagenette
-from src.utils import IDX_TO_CLASS_IMAGENET
-from src.utils import transform_imagenette_to_imagenet_indices
-from src.utils import load_model
-from src.paths import RESULTS_DIR
+from xai_rai_units.src.utils import download_imagenette, load_imagenette
+from xai_rai_units.src.utils import IDX_TO_CLASS_IMAGENET
+from xai_rai_units.src.utils import transform_imagenette_to_imagenet_indices
+from xai_rai_units.src.utils import load_model
+from xai_rai_units.src.paths import RESULTS_DIR
+
 
 def main():
+    """
+    Test the accuracy of imagenette, a smaller
+    version of ImageNet, with only 10 classes.
+    """
     # Load Imagenette test set
     download_imagenette()
     _, test_loader = load_imagenette()
@@ -58,6 +63,7 @@ def main():
             f.write(f"{class_name}: {acc:.2f}\n")
     
     print(f"\nResults saved to {results_file}")
+
 
 if __name__ == "__main__":
     main()

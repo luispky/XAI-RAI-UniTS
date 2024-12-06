@@ -26,21 +26,20 @@ def load_labels(label_path='imagenet_classes.txt'):
     return tuple(name.strip() for name in class_names)
 
 
-def transformation(resize=256, size=224,
-                   mean=(0.485, 0.456, 0.406),
-                   std=(0.229, 0.224, 0.225),
-                   ):
+def transformation(resize=224, size=224):
+    """
+    :returns: transformation to preprocess input image
+              to make it compatible with AlexNet
+    """
     return transforms.Compose([
-        transforms.Resize(size),
+        transforms.Resize(resize),
         transforms.CenterCrop(size),
         transforms.ToTensor(),
-        # transforms.Normalize(mean=mean, std=std),
-
         transforms.Lambda(lambda x: x.clamp(0, 1))
     ])
 
 
-def load_images(image_dir, n=16):
+def load_images(image_dir: str, n=16):
     """Load and preprocess images"""
 
     images = []
@@ -95,7 +94,9 @@ def visualize(outputs, predicted, images, labels):
 
 def main(model_path="models\\alexnet_weights.pth",
          image_dir="data\\images"):
-
+    """
+    Load and classify images with AlexNet
+    """
     print(">>> Downloading the model...")
     model = download_alexnet(model_path)
 
