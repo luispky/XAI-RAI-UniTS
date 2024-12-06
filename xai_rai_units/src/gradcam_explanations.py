@@ -1,8 +1,3 @@
-<<<<<<< HEAD:src/gradcam_explanations.py
-=======
-# todo why #!/usr/bin/env python ?
-#!/usr/bin/env python
->>>>>>> 7d7f36dc61936988a5f6a75eef58c5c0a5d00d0a:xai_rai_units/src/gradcam_explanations.py
 import torch
 import torch.nn as nn
 from typing import Union, List, Optional, Callable, Tuple

@@ -67,7 +67,7 @@ def test_1(image_dir=IMAGE_DIR):
 def test_2(image_dir=IMAGE_DIR):
     """Luis's test"""
     filename = "cassette_player.jpg"
-    image = utils.load_local_images(image_dir + "/" + filename)[0]  # remove the batch dimension
+    image = utils.load_local_images(str(image_dir) + "/" + filename)[0]  # remove the batch dimension
     model = utils.load_model('resnet50')
     plot_measure_proba(model=model, image=image)
 
