@@ -28,7 +28,7 @@ def noisy_image_linspace(image, magnitude, n, seed=None):
         image (Tensor): A tensor of shape (n, C, H, W)
         magnitude (float): Maximum perturbation magnitude
         n (int): Number of samples to take
-        seed (int): Random seed
+        seed (int or None): Random seed
 
     Returns:
         Tensor: Image of shape (n, C, H, W)
