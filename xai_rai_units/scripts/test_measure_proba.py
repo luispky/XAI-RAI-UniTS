@@ -26,7 +26,10 @@ def plot_measure_proba(model, image, label_path=LABELS_PATH,
 
     measure = MeasureProba(model)
     x_ = np.linspace(0, magnitude, n)
-    proba, i_max, target = measure.run(image, magnitude=magnitude, n=n, seed=seed)
+    results = measure.run(image, magnitude=magnitude, n=n, seed=seed)
+    proba = results['probabilities']
+    i_max = results['max_class_index']
+    target = results['final_image']
 
     plt.sca(ax[0, 0])
     plt.title(f'{labels[i_max]} ({proba[0]:.1%})')
