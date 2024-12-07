@@ -5,10 +5,14 @@ from torchvision.transforms import GaussianBlur
 def image_linspace(image, noise, n=100):
     """
     Creates a linspace of images between image and image and image + a given noise
-    image: a tensor of shape (n, C, H, W)
-    noise: a tensor of the same shape
-    n: number of samples to take
-    return: a tensor of shape (n, C, H, W)
+
+    Args:
+        image (Tensor): Image of shape (n, C, H, W)
+        noise (Tensor): Image of the same shape
+        n (int): Number of samples to take
+
+    Returns:
+        Tensor: Image of shape (n, C, H, W)
     """
     t = torch.linspace(0, 1, n).view(-1, 1, 1, 1)
     segment = image + t * noise
@@ -19,11 +23,15 @@ def image_linspace(image, noise, n=100):
 def noisy_image_linspace(image, magnitude, n, seed=None):
     """
     Creates a linspace of images between image and image + noise
-    :param image: a tensor of shape (n, C, H, W)
-    :param magnitude: maximum perturbation magnitude
-    :param n: number of samples to take
-    :param seed: random seed
-    :return: a tensor of shape (n, C, H, W)
+
+    Args:
+        image (Tensor): A tensor of shape (n, C, H, W)
+        magnitude (float): Maximum perturbation magnitude
+        n (int): Number of samples to take
+        seed (int): Random seed
+
+    Returns:
+        Tensor: Image of shape (n, C, H, W)
     """
     if seed is not None:
         torch.manual_seed(seed)
@@ -37,11 +45,15 @@ def noisy_image_linspace(image, magnitude, n, seed=None):
 def blur_image_linspace(image, magnitude, n, epsilon=1e-3):
     """
     Creates a linspace of increasingly blurred images
-    :param image: a tensor of shape (n, C, H, W)
-    :param magnitude: maximum blur magnitude (number of pixels)
-    :param n: number of samples to take
-    :param epsilon: minimum standard deviation (must be positive)
-    :return: a tensor of shape (n, C, H, W)
+
+    Args:
+        image (Tensor): A tensor of shape (n, C, H, W)
+        magnitude (float): Maximum blur magnitude (number of pixels)
+        n (int): Number of samples to take
+        epsilon (float): Minimum standard deviation (must be positive)
+
+    Returns:
+        Tensor: Image of shape (n, C, H, W)
     """
     kernel_size = int(2 * int(magnitude) + 1)
     sigma_values = torch.linspace(epsilon, magnitude, n, device=image.device)
@@ -57,11 +69,15 @@ def blur_image_linspace(image, magnitude, n, epsilon=1e-3):
 def occlusion_linspace(image, magnitude, n, fill_value=0):
     """
     Creates a linspace of increasingly occluded images
-    :param image: a tensor of shape (n, C, H, W)
-    :param magnitude: maximum size of the occlusion (number of pixels)
-    :param n: number of samples to take
-    :param fill_value: value to fill the occlusion with
-    :return: a tensor of shape (n, C, H, W)
+
+    Args:
+        image (Tensor): A tensor of shape (n, C, H, W)
+        magnitude (float): Maximum size of the occlusion (number of pixels)
+        n (int): Number of samples to take
+        fill_value (int): Value to fill the occlusion with
+
+    Return:
+        Tensor: Image of shape (n, C, H, W)
     """
 
     # choose a random occlusion region
@@ -84,11 +100,11 @@ def gaussian_kernel(kernel_size, sigma):
     Creates a 2D Gaussian kernel.
 
     Args:
-    kernel_size: The size of the kernel.
-    sigma: The standard deviation of the Gaussian distribution.
+        kernel_size (int): The size of the kernel.
+        sigma (float): The standard deviation of the Gaussian distribution.
 
     Returns:
-    A 2D Gaussian kernel.
+        Tensor: A 2D Gaussian kernel.
     """
     x = torch.arange(-(kernel_size - 1) / 2, (kernel_size - 1) / 2 + 1)
     y = x.unsqueeze(1)
@@ -102,17 +118,20 @@ def gaussian_kernel(kernel_size, sigma):
 def the_void_linspace(image, magnitude, n, fill_value=0):
     """
     Creates a linspace of increasingly voided images
-    :param image: a tensor of shape (n, C, H, W)
-    :param magnitude: maximum size of the void (number of pixels)
-    :param n: number of samples to take
-    :param fill_value: value to fill the void with
-    :return: a tensor of shape (n, C, H, W)
+
+    Args:
+        image (Tensor): A tensor of shape (n, C, H, W)
+        magnitude (float): Maximum size of the void (number of pixels)
+        n (int): Number of samples to take
+        fill_value (int): Value to fill the void with
+
+    Returns:
+        Tensor: Image of shape (n, C, H, W)
     """
     _, H, W = image.shape
     x = torch.linspace(-1, 1, W, device=image.device)
     y = torch.linspace(-1, 1, H, device=image.device)
     y = y.unsqueeze(1)
-    print(x)
 
     out = []
     for i in range(n):
