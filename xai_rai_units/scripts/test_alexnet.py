@@ -11,6 +11,7 @@ def test_alexnet(model_path=MODELS_DIR / "alexnet_weights.pth",
     """
     print(">>> Downloading the model...")
     model = alexnet.download_alexnet(model_path)
+    model.eval()
 
     print(">>> Loading images...")
     images = alexnet.load_images(image_dir, n=n)

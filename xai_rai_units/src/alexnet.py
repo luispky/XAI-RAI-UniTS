@@ -79,7 +79,7 @@ def load_images(image_dir: str, n=16):
     indices = np.random.choice(len(filenames), n, replace=False)
     filenames = filenames[indices]
 
-    for filename in filenames:
+    for i, filename in enumerate(filenames):
         img_path = os.path.join(image_dir, filename)
         img = Image.open(img_path)
 
@@ -87,10 +87,11 @@ def load_images(image_dir: str, n=16):
         if img.mode == 'RGBA':
             img = img.convert('RGB')
 
-        print(f">>> Loading image: {img_path} size: {img.size} {img.mode}")
+        print(f"\r>>> Loading image ({i+1}/{len(filenames)}): {img_path} size: {img.size} {img.mode}", end='   ')
 
         img_tensor = transformation()(img)
         images.append(img_tensor)
+    print()
 
     return torch.stack(images)
 
@@ -106,7 +107,6 @@ def predict(model, images):
     Returns:
         tuple: a tuple of tensors (outputs, predicted)
     """
-    model.eval()
     with torch.no_grad():
         outputs = model(images)
         _, predicted = torch.max(outputs.data, 1)
