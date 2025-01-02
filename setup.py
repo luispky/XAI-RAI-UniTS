@@ -7,6 +7,6 @@ setuptools.setup(
    description='Project for the XAI & RAI exam',
    author='Omar Cusma Fait, Luis Palacios',
    author_email='omar.cusma.fait@gmail.com',
-   install_requires=['wheel', 'torch'],
+   install_requires=['wheel', 'torch', 'numpy', 'matplotlib'],
    packages=setuptools.find_packages()
 )

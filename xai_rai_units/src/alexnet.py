@@ -8,7 +8,16 @@ from PIL import Image
 
 
 def download_alexnet(model_path):
-    """A function to download and save the AlexNet model"""
+    """
+    A function to download and save the AlexNet model. If the model
+    already exists, it will be loaded from the disk.
+
+    Args:
+        model_path (str): path to save the model
+
+    Returns:
+        model: an AlexNet model
+    """
     if not os.path.exists(model_path):
         model = torchvision.models.alexnet(weights=True)
         torch.save(model.state_dict(), model_path)
@@ -19,8 +28,16 @@ def download_alexnet(model_path):
     return model
 
 
-def load_labels(label_path='imagenet_classes.txt'):
-    """Load class labels from file"""
+def load_labels(label_path):
+    """
+    Load class labels from file.
+
+    Args:
+        label_path (str): path to the file containing class names
+
+    Returns:
+        tuple: tuple of class names
+    """
     with open(label_path, 'r') as f:
         class_names = f.readlines()
     return tuple(name.strip() for name in class_names)
@@ -28,8 +45,15 @@ def load_labels(label_path='imagenet_classes.txt'):
 
 def transformation(resize=224, size=224):
     """
-    :returns: transformation to preprocess input image
-              to make it compatible with AlexNet
+    Transformation to preprocess input image
+    to make it compatible with AlexNet.
+
+    Args:
+        resize (int): size to resize the image
+        size (int): size to crop the image
+
+    Returns:
+        torchvision.transforms.Compose: a sequence of transformations
     """
     return transforms.Compose([
         transforms.Resize(resize),
@@ -40,14 +64,22 @@ def transformation(resize=224, size=224):
 
 
 def load_images(image_dir: str, n=16):
-    """Load and preprocess images"""
+    """
+    Load and preprocess images from a directory.
 
+    Args:
+        image_dir (str): path to the directory containing images
+        n (int): number of images to load
+
+    Returns:
+        torch.Tensor: a tensor of shape (n, 3, 224, 224)
+    """
     images = []
     filenames = np.array(list(os.listdir(image_dir)))
     indices = np.random.choice(len(filenames), n, replace=False)
     filenames = filenames[indices]
 
-    for filename in filenames:
+    for i, filename in enumerate(filenames):
         img_path = os.path.join(image_dir, filename)
         img = Image.open(img_path)
 
@@ -55,17 +87,26 @@ def load_images(image_dir: str, n=16):
         if img.mode == 'RGBA':
             img = img.convert('RGB')
 
-        print(f">>> Loading image: {img_path} size: {img.size} {img.mode}")
+        print(f"\r>>> Loading image ({i+1}/{len(filenames)}): {img_path} size: {img.size} {img.mode}", end='   ')
 
         img_tensor = transformation()(img)
         images.append(img_tensor)
+    print()
 
     return torch.stack(images)
 
 
 def predict(model, images):
-    """Make predictions on images using the model"""
-    model.eval()
+    """
+    Make predictions on images using the model.
+
+    Args:
+        model: a PyTorch model
+        images (torch.Tensor): a tensor of shape (n, 3, 224, 224)
+
+    Returns:
+        tuple: a tuple of tensors (outputs, predicted)
+    """
     with torch.no_grad():
         outputs = model(images)
         _, predicted = torch.max(outputs.data, 1)
@@ -73,7 +114,15 @@ def predict(model, images):
 
 
 def visualize(outputs, predicted, images, labels):
-    """A function to make predictions and visualize results"""
+    """
+    A function to make predictions and visualize results.
+
+    Args:
+        outputs (torch.Tensor): a tensor of shape (n, num_classes)
+        predicted (torch.Tensor): a tensor of shape (n,)
+        images (torch.Tensor): a tensor of shape (n, 3, 224, 224)
+        labels (tuple): a tuple of class names
+    """
     n = len(images)
     nrows = int(n ** 0.5)
     rows = np.arange(n) % nrows
@@ -90,24 +139,3 @@ def visualize(outputs, predicted, images, labels):
         ax.set_title(f"{predicted_class} ({proba:.2f}%)")
         ax.axis('off')
     plt.show()
-
-
-def main(model_path="models\\alexnet_weights.pth",
-         image_dir="data\\images"):
-    """
-    Load and classify images with AlexNet
-    """
-    print(">>> Downloading the model...")
-    model = download_alexnet(model_path)
-
-    print(">>> Loading images...")
-    images = load_images(image_dir, n=16)
-    labels = load_labels()
-
-    print(">>> Making predictions...")
-    outputs, predicted = predict(model, images)
-    visualize(outputs, predicted, images, labels)
-
-
-if __name__ == '__main__':
-    main()
