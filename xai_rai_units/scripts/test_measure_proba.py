@@ -3,6 +3,7 @@ Check how the perturbations of an image influence the classification.
 """
 import numpy as np
 import matplotlib.pyplot as plt
+
 from xai_rai_units.src.paths import MODELS_DIR, IMAGE_DIR, LABELS_PATH
 from xai_rai_units.src.measure_proba import MeasureProba
 from xai_rai_units.src.alexnet import download_alexnet, load_images, load_labels
