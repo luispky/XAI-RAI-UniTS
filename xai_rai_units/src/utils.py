@@ -14,6 +14,7 @@ from torchvision.models import resnet50, ResNet50_Weights
 from torchvision.models import alexnet, AlexNet_Weights
 import timm
 from xai_rai_units.src.paths import FIGURES_DIR, DATASETS_DIR
+from pytorch_grad_cam.utils.image import show_cam_on_image
 
 
 def get_imagenet_idx_to_class() -> Dict[int, str]:
@@ -426,7 +427,7 @@ def load_model(model_name):
 
 def reshape_transform_swin_transformer(tensor, height=7, width=7):
     """
-    # TODO comment input-output input-output
+    Transforms the tensor to the desired shape for Vision Transformer models.
     """
     result = tensor.reshape(tensor.size(0),
                             height, width, tensor.size(2))
@@ -439,7 +440,7 @@ def reshape_transform_swin_transformer(tensor, height=7, width=7):
 
 def reshape_transform_vit(tensor, height=14, width=14):
     """
-    # TODO comment input-output input-output
+    Transforms the tensor to the desired shape for Vision Transformer models.
     """
     result = tensor[:, 1:, :].reshape(tensor.size(0),
                                       height, width, tensor.size(2))
@@ -447,3 +448,19 @@ def reshape_transform_vit(tensor, height=14, width=14):
     # like in CNNs.
     result = result.transpose(2, 3).transpose(1, 2)
     return result
+
+def preprocess_class_label(class_label: str) -> int:
+    """Preprocesses and validates the ImageNet class label."""
+    class_label = class_label.lower().split(".")[0]
+    if class_label not in CLASS_TO_IDX_IMAGENET:
+        raise ValueError(f"Invalid class label '{class_label}'. Please provide a valid ImageNet class label.")
+    return CLASS_TO_IDX_IMAGENET[class_label]
+
+def overlay_heatmaps(attr: np.ndarray, perturbed_images: torch.Tensor) -> torch.Tensor:
+    """Generates overlayed heatmaps on normalized images."""
+    # Normalize input images to range [0, 1] and convert (B, C, H, W) to (B, H, W, C)
+    imgs_normalized = normalize_images(perturbed_images)
+    # Overlay heatmaps onto normalized images provided proper dimensions
+    return torch.Tensor(
+        np.array([show_cam_on_image(img, cam, use_rgb=True) for img, cam in zip(imgs_normalized, attr)])
+    )
