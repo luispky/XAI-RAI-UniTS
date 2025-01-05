@@ -140,3 +140,38 @@ def the_void_linspace(image, magnitude, n, fill_value=0):
         out.append(image * mask + fill_value * (1 - mask))
 
     return torch.stack(out)
+
+
+def inverse_gradient(image, model, i_class, epsilon=0.1):  # todo work in prpgress
+    """
+    Perturbs an image in the direction of the gradient of the output w.r.t the input
+
+    Args:
+        image (Tensor): Image of shape (C, H, W)
+        model (nn.Module): A PyTorch model
+        i_class (int): Index of the class to compute the gradient w.r.t
+        epsilon (float): Perturbation magnitude
+
+    Returns:
+        Tensor: Image of shape (C, H, W)
+    """
+
+    # Set the model to evaluation mode
+    model.eval()
+
+    # Forward pass through the model
+    input_tensor = image.clone().detach().requires_grad_(True)
+    input_tensor = input_tensor.unsqueeze(0)
+    output = model(input_tensor)
+
+    # Compute gradients of the output with respect to the input
+    output_class = output[0, i_class]  # Selecting the first class output
+    output_class.backward()  # Compute gradients
+
+    # Gradient of the output w.r.t the input
+    gradients = input_tensor.grad
+
+    # modify the input
+    new_input = input_tensor + epsilon * gradients
+
+    return new_input.squeeze(0)
