@@ -33,7 +33,7 @@ GRADCAM_METHODS = {
 }
 
 CAPTUM_METHODS = {
-    "GradCam": LayerGradCam,
+    "LayerGradCam": LayerGradCam,
     "GuidedGradCam": GuidedGradCam,
     "DeepLift": DeepLift,
     "LayerDeepLift": LayerDeepLift,
@@ -68,6 +68,10 @@ class ExplanationGenerator:
         """
         # Preprocess the class label
         class_idx = preprocess_class_label(class_label_imagenet)
+
+        print(f"Generating explanations using the {self.method} method"
+              f" from the {self.library} library for the class {class_label_imagenet}"
+              f" from the ImageNet dataset.")
 
         if self.library == "gradcam":
             return self._generate_gradcam_explanations(
