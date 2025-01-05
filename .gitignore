@@ -17,5 +17,8 @@ venv/
 .venv/
 .env/
 
+# Luis config file
+.env
+
 # VSCode
 .vscode/

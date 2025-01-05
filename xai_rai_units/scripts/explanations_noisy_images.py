@@ -10,7 +10,7 @@ from xai_rai_units.src.utils import (
 def main(library="gradcam", method="GradCAM", model_name="alexnet", n_images=16, magnitude=0.1, seed=42):
     set_seed(seed)
 
-    filename = "cassette_player"
+    filename = "llama"
     preprocessed_image = load_local_images(filename)
 
     noisy_images = noisy_image_linspace(preprocessed_image, magnitude, n_images)
@@ -26,6 +26,5 @@ def main(library="gradcam", method="GradCAM", model_name="alexnet", n_images=16,
     show_images(explanations, labels=pred_labels, save_fig=True,
                       filename=f"{library}_{filename.split('.')[0]}_{model_name}.png")
 
-
 if __name__ == "__main__":
-    main(library="gradcam", method="GradCAM", model_name="alexnet", magnitude=0.8)
+    main(library="gradcam", method="GradCAM", model_name="resnet50", magnitude=0.8, seed=42)
