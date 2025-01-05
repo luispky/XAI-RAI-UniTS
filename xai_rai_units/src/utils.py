@@ -508,7 +508,7 @@ def setup_model_and_layers(model_name: str) -> Tuple[nn.Module, List[nn.Module],
     elif model_name == "resnet50":
         target_layers = [model.layer4[-1].conv3]
     elif model_name == "swin_transformer":
-        target_layers = [model.layers[-1].blocks[-1].norm1]
+        target_layers = [model.layers[-1].blocks[-1].norm2]
         reshape_transform = reshape_transform_swin_transformer
     elif model_name == "vit":
         target_layers = [model.blocks[-1].norm1]
