@@ -65,7 +65,7 @@ def generate_noisy_images(
     _, C, W, H = image.shape
     
     # Generate normal random noise for all images in the sequence
-    noise = torch.randn((n_images, C, W, H))
+    noise = torch.randn((1, C, W, H))
 
     # Create scaling factors
     scaling_factors = torch.linspace(0, magnitude, steps=n_images).view(-1, 1, 1, 1)
