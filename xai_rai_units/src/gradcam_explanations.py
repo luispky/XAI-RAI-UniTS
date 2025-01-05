@@ -1,14 +1,18 @@
 import torch
 import torch.nn as nn
 from typing import Union, List, Optional, Callable, Tuple
-import numpy as np
-
-from pytorch_grad_cam import GradCAM, GradCAMPlusPlus, XGradCAM, EigenCAM, HiResCAM
+from pytorch_grad_cam import (
+    GradCAM,
+    GradCAMPlusPlus,
+    XGradCAM,
+    EigenCAM,
+    HiResCAM
+)
 from pytorch_grad_cam.utils.model_targets import ClassifierOutputTarget
 from xai_rai_units.src.utils import IDX_TO_CLASS_IMAGENET
 from xai_rai_units.src.utils import preprocess_class_label, overlay_heatmaps
 
-# Supported Grad-CAM methods
+
 METHODS = {
     "GradCAM": GradCAM,
     "GradCAM++": GradCAMPlusPlus,
@@ -16,7 +20,6 @@ METHODS = {
     "EigenCAM": EigenCAM,
     "HiResCAM": HiResCAM,
 }
-
 
 def gradcam_explanations_classifier_series(
         model: nn.Module,

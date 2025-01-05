@@ -15,7 +15,7 @@ def main(n_images=16, magnitude=.1, seed=42):
     utils.set_seed(seed)
 
     # Load test image
-    filename = "cassette_player.jpg"
+    filename = "llama.jpeg"
     image_path = f"{str(IMAGE_DIR)}/{filename}"
     preprocessed_image = utils.load_local_images(image_path)
 
@@ -30,9 +30,9 @@ def main(n_images=16, magnitude=.1, seed=42):
     
     target_layers = None
     if model_name == 'alexnet':
-        target_layers = model.features[10]
+        target_layers = [model.features[10]]
     elif model_name == 'resnet50':
-        target_layers = model.layer4[-1].conv3
+        target_layers = [model.layer4[-1].conv3]
 
     # Grad-CAM explanations
     explanations, pred_labels = captum_explanations_classifier_series(
@@ -40,7 +40,7 @@ def main(n_images=16, magnitude=.1, seed=42):
         perturbed_images=noisy_images,
         class_label_imagenet=filename,  # Internally preprocesses the label
         target_layers=target_layers,
-        method = 'LayerConductance',
+        method = 'GradCam',
         predicted_labels=True,
     )
 

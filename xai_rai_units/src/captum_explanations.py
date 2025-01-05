@@ -1,6 +1,6 @@
-import numpy as np
 import torch
 import torch.nn as nn
+from typing import Union, List, Optional, Tuple
 from captum.attr import (
     LayerGradCam,
     LayerAttribution,
@@ -9,9 +9,9 @@ from captum.attr import (
     GuidedGradCam,
     DeepLift,
 )
-from typing import Union, List, Optional, Tuple
 from xai_rai_units.src.utils import IDX_TO_CLASS_IMAGENET
 from xai_rai_units.src.utils import preprocess_class_label, overlay_heatmaps
+
 
 METHODS = {
     "GradCam": LayerGradCam,
@@ -47,7 +47,7 @@ def captum_explanations_classifier_series(
 
     # Initialize the explanation method
     explanation_method = METHODS[method]
-    explainer = explanation_method(model) if method in {"GuidedGradCam", "DeepLift"} else explanation_method(model, target_layers)
+    explainer = explanation_method(model) if method in {"GuidedGradCam", "DeepLift"} else explanation_method(model, target_layers[0])
 
     # Compute the feature attributions
     attr = explainer.attribute(perturbed_images, target=torch.tensor([class_idx] * len(perturbed_images)))
@@ -60,7 +60,7 @@ def captum_explanations_classifier_series(
         explanations = overlay_heatmaps(upsampled_attr, perturbed_images)
     else:
         explanations = attr
-
+    
     # Get predicted labels if requested
     pred_labels = None
     if predicted_labels:

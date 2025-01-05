@@ -2,10 +2,11 @@ import os
 import numpy as np
 import torch
 import torchvision
+import torch.nn as nn
 import matplotlib.pyplot as plt
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
-from typing import Dict, Union, List, Optional
+from typing import Dict, Union, List, Optional, Tuple, Callable
 from PIL import Image
 import random
 import tarfile
@@ -13,9 +14,8 @@ import requests
 from torchvision.models import resnet50, ResNet50_Weights
 from torchvision.models import alexnet, AlexNet_Weights
 import timm
-from xai_rai_units.src.paths import FIGURES_DIR, DATASETS_DIR
+from xai_rai_units.src.paths import FIGURES_DIR, DATASETS_DIR, IMAGE_DIR
 from pytorch_grad_cam.utils.image import show_cam_on_image
-
 
 def get_imagenet_idx_to_class() -> Dict[int, str]:
     """
@@ -321,14 +321,14 @@ def plot_class_examples(dataloader: DataLoader,
         plt.show()
     plt.close()
 
-
-def load_local_images(image_paths: Union[str, List[str]], img_size: int = 224) -> torch.Tensor:
+def load_local_images(filename: Union[str, List[str]], img_size: int = 224) -> torch.Tensor:
     """
-    Loads and preprocesses one or multiple images for model inference.
+    Loads and preprocesses one or multiple images for model inference. You can provide just the filename without 
+    the extension, and the function will locate the file in the specified directory (IMAGE_DIR).
 
-    :param image_paths: Path to a single image or a list of image paths.
+    :param filename: Filename or a list of filenames without extensions to search for in IMAGE_DIR.
     :param img_size: The target size for resizing the images.
-    :return: Preprocessed image tensor(s) with batch dimension with shape (batch_size, 3, img_size, img_size).
+    :return: Preprocessed image tensor(s) with batch dimension (batch_size, 3, img_size, img_size).
     """
     # Define the transformations
     transforms_pipeline = transforms.Compose([
@@ -340,19 +340,31 @@ def load_local_images(image_paths: Union[str, List[str]], img_size: int = 224) -
         ),
     ])
 
-    # Ensure image_paths is a list
-    if isinstance(image_paths, str):
-        image_paths = [image_paths]
+    # Ensure filename is a list
+    if isinstance(filename, str):
+        filename = [filename]
 
-    # Load and preprocess each image
     images = []
-    for image_path in image_paths:
+    for fname in filename:
+        # Search for the file in IMAGE_DIR with common image extensions
+        possible_extensions = ['.jpg', '.jpeg', '.png']
+        file_found = False
+
+        for ext in possible_extensions:
+            image_path = os.path.join(IMAGE_DIR, fname + ext)
+            if os.path.exists(image_path):
+                file_found = True
+                break
+        
+        if not file_found:
+            raise FileNotFoundError(f"Image file '{fname}' with any of the extensions {possible_extensions} not found in directory {IMAGE_DIR}")
+
+        # Open and preprocess the image
         image = Image.open(image_path).convert("RGB")  # Ensure RGB format
         images.append(transforms_pipeline(image))
 
     # Stack all image tensors to form a batch
     return torch.stack(images)  # Shape: [batch_size, 3, img_size, img_size]
-
 
 def generate_noisy_images(
         image: torch.Tensor,
@@ -464,3 +476,44 @@ def overlay_heatmaps(attr: np.ndarray, perturbed_images: torch.Tensor) -> torch.
     return torch.Tensor(
         np.array([show_cam_on_image(img, cam, use_rgb=True) for img, cam in zip(imgs_normalized, attr)])
     )
+
+def setup_model_and_layers(model_name: str) -> Tuple[nn.Module, List[nn.Module], Optional[Callable]]:
+    """
+    Configures the model, selects target layers, and assigns reshape transformations based on the model architecture.
+
+    This function loads the specified model and selects the appropriate target layers for explanation methods 
+    (e.g., Grad-CAM, Captum). It also provides a reshape transformation if needed for transformer-based models 
+    (like ViT or Swin-Transformer). A `ValueError` is raised if the model is unsupported.
+
+    Args:
+        model_name (str): The model architecture to configure. Options include: 'alexnet', 'resnet50', 
+                          'swin_transformer', and 'vit'.
+    
+    Returns:
+        Tuple[nn.Module, List[nn.Module], Optional[Callable]]:
+            - The model (nn.Module) corresponding to the specified `model_name`.
+            - A list of target layers (List[nn.Module]) for gradient-based methods.
+            - An optional reshape transformation function (Callable) for models like ViT and Swin-Transformer.
+    
+    Raises:
+        ValueError: If the `model_name` is unsupported.
+    """
+    model = load_model(model_name)
+
+    reshape_transform, target_layers = None, []
+
+    # Select the target layer based on the model architecture
+    if model_name == "alexnet":
+        target_layers = [model.features[10]]
+    elif model_name == "resnet50":
+        target_layers = [model.layer4[-1].conv3]
+    elif model_name == "swin_transformer":
+        target_layers = [model.layers[-1].blocks[-1].norm1]
+        reshape_transform = reshape_transform_swin_transformer
+    elif model_name == "vit":
+        target_layers = [model.blocks[-1].norm1]
+        reshape_transform = reshape_transform_vit
+    else:
+        raise ValueError(f"Unsupported model: {model_name}")
+
+    return model, target_layers, reshape_transform

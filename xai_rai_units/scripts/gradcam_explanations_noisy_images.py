@@ -15,9 +15,8 @@ def main(n_images=16, magnitude=.1, seed=42):
     utils.set_seed(seed)
 
     # Load test image
-    filename = "cassette_player.jpg"
-    image_path = f"{str(IMAGE_DIR)}/{filename}"
-    preprocessed_image = utils.load_local_images(image_path)
+    filename = "cassette_player"
+    preprocessed_image = utils.load_local_images(filename)
 
     # Generate a sequence of noisy images
     noisy_images = noisy_image_linspace(preprocessed_image, magnitude, n_images)
