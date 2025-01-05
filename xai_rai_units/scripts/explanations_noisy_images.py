@@ -30,4 +30,4 @@ def main(library="gradcam", method="GradCAM", model_name="alexnet", n_images=16,
                       filename=f"{library}_{filename.split('.')[0]}_{model_name}")
 
 if __name__ == "__main__":
-    main(library="gradcam", method="GradCAM", model_name="resnet50", magnitude=0.8, seed=42)
+    main(library="gradcam", method="GradCAM", model_name="alexnet", magnitude=0.5, seed=42)

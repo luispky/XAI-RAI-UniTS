@@ -173,7 +173,7 @@ def show_images(
     plt.tight_layout()
     if save_fig:
         filepath = FIGURES_DIR / f"{filename}.png"
-        plt.savefig(filepath)
+        plt.savefig(filepath, dpi=300, bbox_inches="tight")
     plt.show()
     plt.close()
 
