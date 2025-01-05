@@ -2,9 +2,8 @@
 Use gradcam_explanations_classifier on a sequence of increasingly noisy images.
 """
 from xai_rai_units.src.gradcam_explanations import gradcam_explanations_classifier_series
-from xai_rai_units.src.paths import IMAGE_DIR
-from xai_rai_units.src.perturbations import noisy_image_linspace
 from xai_rai_units.src import utils
+from xai_rai_units.src.perturbations import noisy_image_linspace, generate_noisy_images
 
 
 def main(n_images=16, magnitude=.1, seed=42):
@@ -15,16 +14,17 @@ def main(n_images=16, magnitude=.1, seed=42):
     utils.set_seed(seed)
 
     # Load test image
-    filename = "cassette_player"
+    filename = "llama"
     preprocessed_image = utils.load_local_images(filename)
 
     # Generate a sequence of noisy images
-    noisy_images = noisy_image_linspace(preprocessed_image, magnitude, n_images)
+    # noisy_images = noisy_image_linspace(preprocessed_image, magnitude, n_images)
+    noisy_images = generate_noisy_images(preprocessed_image, magnitude, n_images)
 
     # utils.show_images(noisy_images, save_fig=True, filename=f"noisy_{filename.split('.')[0]}.png")
 
     # Load model
-    model_name = 'alexnet'
+    model_name = 'resnet50'
     model = utils.load_model(model_name)
     
     # Target layers for Grad-CAM
@@ -55,7 +55,7 @@ def main(n_images=16, magnitude=.1, seed=42):
     )
 
     utils.show_images(explanations, labels=pred_labels, save_fig=True,
-                      filename=f"gradcam_{filename.split('.')[0]}_{model_name}.png")
+                      filename=f"gradcam_{filename.split('.')[0]}_{model_name}")
 
 
 if __name__ == "__main__":

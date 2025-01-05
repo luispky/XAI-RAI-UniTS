@@ -366,41 +366,6 @@ def load_local_images(filename: Union[str, List[str]], img_size: int = 224) -> t
     # Stack all image tensors to form a batch
     return torch.stack(images)  # Shape: [batch_size, 3, img_size, img_size]
 
-def generate_noisy_images(
-        image: torch.Tensor,
-        n_images: int,
-        magnitude: float
-) -> torch.Tensor:
-    """
-    Generates a sequence of noisy images following the formula:
-    image[i] = original image + normal random noise * magnitude * i / n_images
-    
-        :param image: Input image tensor with shape (C, H, W) or (1, C, H, W).
-    :param n_images: Number of noisy images to generate.
-    :param magnitude: Scale of the noise to add.
-    :return: A tensor of noisy images with shape (n_images, C, H, W).
-    """
-    # Ensure input image has shape (1, C, W, H)
-    if image.dim() == 3:
-        image = image.unsqueeze(0)  # Add batch dimension
-    elif image.dim() != 4 or image.size(0) != 1:
-        raise ValueError("Input image must have shape (C, W, H) or (1, C, W, H).")
-
-    # Extract image dimensions
-    _, C, W, H = image.shape
-
-    # Generate normal random noise for all images in the sequence
-    noise = torch.randn((n_images, C, W, H), device=image.device)
-
-    # Create scaling factors
-    scaling_factors = torch.linspace(0, magnitude, steps=n_images, device=image.device).view(-1, 1, 1, 1)
-
-    # Add scaled noise to the image
-    noisy_images = image + noise * scaling_factors
-
-    return noisy_images
-
-
 def set_seed(seed):
     """Sets the seed for Python, NumPy, and PyTorch to ensure reproducibility."""
     random.seed(seed)
