@@ -26,6 +26,5 @@ def main(library="gradcam", method="GradCAM", model_name="alexnet", n_images=16,
     show_images(explanations, labels=pred_labels, save_fig=True,
                       filename=f"{library}_{filename.split('.')[0]}_{model_name}")
 
-
 if __name__ == "__main__":
-    main(library="gradcam", method="GradCAM", model_name="resnet50", magnitude=0.1)
+    main(library="gradcam", method="GradCAM", model_name="resnet50", magnitude=0.8, seed=42)
