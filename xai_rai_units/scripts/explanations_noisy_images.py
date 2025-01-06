@@ -7,9 +7,6 @@ from xai_rai_units.src.utils import (
     setup_model_and_layers
 )
 
-import sys
-import numpy as np
-
 
 def main(library="gradcam", method="GradCAM", model_name="alexnet", n_images=16, magnitude=0.1, seed=42):
     """
@@ -40,13 +37,20 @@ def main(library="gradcam", method="GradCAM", model_name="alexnet", n_images=16,
     generator = ExplanationGenerator(model, library, method)
 
     # Generate explanations and optionally retrieve predicted labels
-    explanations, pred_labels = generator.generate_explanations(
+    explanations, pred_labels, noise_fraction_changes, _   = generator.generate_explanations(
         noisy_images,
         filename,
         target_layers,
-        True,
         reshape_transform
     )
+    
+    # Print header with proper alignment
+    print(f"{'Label':<15} | {'Percentage of Noise':<20}")
+    print('-' * 40)  # Separator line for better readability
+
+    # Print each label and noise percentage
+    for label, noise in zip(pred_labels, noise_fraction_changes):
+        print(f"{str(label):<15} | {noise:.2f}")
 
     # Visualize and save the generated explanations
     show_images(
@@ -57,4 +61,4 @@ def main(library="gradcam", method="GradCAM", model_name="alexnet", n_images=16,
     )
 
 if __name__ == "__main__":
-    main(library="gradcam", method="GradCAM", model_name="alexnet", magnitude=0.5, seed=42)
+    main(library="gradcam", method="GradCAM", model_name="resnet50", magnitude=0.5, seed=42)
