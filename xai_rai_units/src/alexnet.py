@@ -43,10 +43,12 @@ def load_labels(label_path):
     return tuple(name.strip() for name in class_names)
 
 
-def transformation(resize=224, size=224):
+def transformation(resize=224, size=224, clamp=False):
     """
     Transformation to preprocess input image
     to make it compatible with AlexNet.
+    The clamp method is used to ensure that the pixel
+    values are between 0 and 1.
 
     Args:
         resize (int): size to resize the image
@@ -55,12 +57,13 @@ def transformation(resize=224, size=224):
     Returns:
         torchvision.transforms.Compose: a sequence of transformations
     """
-    return transforms.Compose([
-        transforms.Resize(resize),
-        transforms.CenterCrop(size),
-        transforms.ToTensor(),
-        transforms.Lambda(lambda x: x.clamp(0, 1))
-    ])
+    t = list()
+    t.append(transforms.Resize(resize))
+    t.append(transforms.CenterCrop(size))
+    t.append(transforms.ToTensor())
+    if clamp:
+        t.append(transforms.Lambda(lambda x: x.clamp(0, 1)))
+    return transforms.Compose(t)
 
 
 def load_images(image_dir: str, n=16):

@@ -17,13 +17,15 @@ import timm
 from xai_rai_units.src.paths import FIGURES_DIR, DATASETS_DIR, IMAGE_DIR
 from pytorch_grad_cam.utils.image import show_cam_on_image
 
-def get_imagenet_idx_to_class() -> Dict[int, str]:
+
+# URL for the ImageNet class-to-index mapping JSON file
+IMAGENET_CLASS_URL = "https://storage.googleapis.com/download.tensorflow.org/data/imagenet_class_index.json"
+
+
+def get_imagenet_idx_to_class(url=IMAGENET_CLASS_URL) -> Dict[int, str]:
     """
     # TODO comment input-output
     """
-    # URL for the ImageNet class-to-index mapping JSON file
-    url = "https://storage.googleapis.com/download.tensorflow.org/data/imagenet_class_index.json"
-
     # Send a GET request to download the file
     response = requests.get(url)
 
@@ -106,13 +108,11 @@ def normalize_images(images: torch.Tensor) -> np.ndarray:
     return images.cpu().numpy()  # Ensure conversion is performed on CPU for efficiency
 
 
-def show_images(
-        images: torch.Tensor,
-        labels: Optional[Union[List[str], torch.Tensor]] = None,
-        correct_match: Union[list[bool], None] = None,
-        save_fig: bool = False,
-        filename: str = "images",
-):
+def show_images(images: torch.Tensor,
+                labels: Optional[Union[List[str], torch.Tensor]] = None,
+                correct_match: Union[list[bool], None] = None,
+                save_fig: bool = False,
+                filename: str = "images"):
     """
     Displays a batch of images in a grid, optionally with labels and match indicators.
 
@@ -173,7 +173,7 @@ def show_images(
     plt.tight_layout()
     if save_fig:
         filepath = FIGURES_DIR / f"{filename}.png"
-        plt.savefig(filepath)
+        plt.savefig(filepath, dpi=300, bbox_inches="tight")
     plt.show()
     plt.close()
 
@@ -321,6 +321,7 @@ def plot_class_examples(dataloader: DataLoader,
         plt.show()
     plt.close()
 
+
 def load_local_images(filename: Union[str, List[str]], img_size: int = 224) -> torch.Tensor:
     """
     Loads and preprocesses one or multiple images for model inference. You can provide just the filename without 
@@ -334,10 +335,10 @@ def load_local_images(filename: Union[str, List[str]], img_size: int = 224) -> t
     transforms_pipeline = transforms.Compose([
         transforms.Resize((img_size, img_size)),  # Resize to img_size x img_size
         transforms.ToTensor(),  # Convert image to tensor
-        transforms.Normalize(
-            mean=[0.485, 0.456, 0.406],  # Normalize using ImageNet mean
-            std=[0.229, 0.224, 0.225],  # Normalize using ImageNet std
-        ),
+        # transforms.Normalize(
+            # mean=[0.485, 0.456, 0.406],  # Normalize using ImageNet mean
+            # std=[0.229, 0.224, 0.225],  # Normalize using ImageNet std
+        # ),
     ])
 
     # Ensure filename is a list
@@ -348,16 +349,14 @@ def load_local_images(filename: Union[str, List[str]], img_size: int = 224) -> t
     for fname in filename:
         # Search for the file in IMAGE_DIR with common image extensions
         possible_extensions = ['.jpg', '.jpeg', '.png']
-        file_found = False
 
         for ext in possible_extensions:
             image_path = os.path.join(IMAGE_DIR, fname + ext)
             if os.path.exists(image_path):
-                file_found = True
                 break
-        
-        if not file_found:
-            raise FileNotFoundError(f"Image file '{fname}' with any of the extensions {possible_extensions} not found in directory {IMAGE_DIR}")
+        else:
+            raise FileNotFoundError(f"Image file '{fname}' with any of the extensions "
+                                    f"{possible_extensions} not found in directory {IMAGE_DIR}")
 
         # Open and preprocess the image
         image = Image.open(image_path).convert("RGB")  # Ensure RGB format
@@ -365,6 +364,7 @@ def load_local_images(filename: Union[str, List[str]], img_size: int = 224) -> t
 
     # Stack all image tensors to form a batch
     return torch.stack(images)  # Shape: [batch_size, 3, img_size, img_size]
+
 
 def set_seed(seed):
     """Sets the seed for Python, NumPy, and PyTorch to ensure reproducibility."""
@@ -426,12 +426,14 @@ def reshape_transform_vit(tensor, height=14, width=14):
     result = result.transpose(2, 3).transpose(1, 2)
     return result
 
+
 def preprocess_class_label(class_label: str) -> int:
     """Preprocesses and validates the ImageNet class label."""
     class_label = class_label.lower().split(".")[0]
     if class_label not in CLASS_TO_IDX_IMAGENET:
         raise ValueError(f"Invalid class label '{class_label}'. Please provide a valid ImageNet class label.")
     return CLASS_TO_IDX_IMAGENET[class_label]
+
 
 def overlay_heatmaps(attr: np.ndarray, perturbed_images: torch.Tensor) -> torch.Tensor:
     """Generates overlayed heatmaps on normalized images."""
@@ -441,6 +443,7 @@ def overlay_heatmaps(attr: np.ndarray, perturbed_images: torch.Tensor) -> torch.
     return torch.Tensor(
         np.array([show_cam_on_image(img, cam, use_rgb=True) for img, cam in zip(imgs_normalized, attr)])
     )
+
 
 def setup_model_and_layers(model_name: str) -> Tuple[nn.Module, List[nn.Module], Optional[Callable]]:
     """

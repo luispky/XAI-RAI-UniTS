@@ -23,6 +23,7 @@ from xai_rai_units.src.utils import (
     overlay_heatmaps,
 )
 
+
 # Constants for methods
 GRADCAM_METHODS = {
     "GradCAM": GradCAM,
@@ -42,11 +43,23 @@ CAPTUM_METHODS = {
 
 SUPPORTED_LIBRARIES = {"gradcam", "captum"}
 
-
 class ExplanationGenerator:
+    """
+    Interface to generate explanations for image classification models using Grad-CAM or Captum library methods.
+    The class is tailed to work with models trained on the ImageNet dataset and generate explanations for a Tensor
+    of perturbed images of a specific class label.
+    The Grad-CAM methods can work with both convolutional and transformer-based architectures.
+    The Captum methods are limited to convolutional architectures.
+    """
     def __init__(self, model: nn.Module, library: str, method: str):
         """
-        Initialize the explanation generator for the given library and method.
+        Initialize the explanation generator.
+
+        :param model: A PyTorch model for which explanations will be generated. If the library is 'captum', only
+                        convolutional models are supported. If the library is 'gradcam', both convolutional and
+                        transformer-based models are supported.
+        :param library: The library to use for explanations ('gradcam' or 'captum').
+        :param method: The specific explanation method to use (e.g., 'GradCAM', 'LayerGradCam').
         """
         self.model = model
         self.library = library.lower()
@@ -64,7 +77,15 @@ class ExplanationGenerator:
         reshape_transform: Optional[Callable] = None,
     ) -> Union[torch.Tensor, Tuple[torch.Tensor, Optional[List[str]]]]:
         """
-        Generate explanations for perturbed images using the selected library and method.
+        Generate explanations for a batch of perturbed images using the specified library and method.
+
+        :param perturbed_images: A batch of perturbed input images from a ImageNet class.
+        :param class_label_imagenet: The ImageNet class label for which explanations are generated.
+        :param target_layers: The target layers for which explanations are generated.
+        :param predicted_labels: If True, return predicted class labels along with explanations.
+        :param reshape_transform: A transformation function to reshape the input images when using Grad-CAM methods.
+
+        :return: A tuple containing the explanation heatmaps and optionally the predicted labels.
         """
         # Preprocess the class label
         class_idx = preprocess_class_label(class_label_imagenet)
@@ -72,7 +93,7 @@ class ExplanationGenerator:
         print(f"Generating explanations using the {self.method} method"
               f" from the {self.library} library for the class {class_label_imagenet}"
               f" from the ImageNet dataset.")
-
+        
         if self.library == "gradcam":
             return self._generate_gradcam_explanations(
                 perturbed_images, class_idx, target_layers, predicted_labels, reshape_transform
@@ -100,7 +121,8 @@ class ExplanationGenerator:
             raise ValueError("`target_layers` must be provided for Grad-CAM methods.")
 
         with explainer(model=self.model, target_layers=target_layers, reshape_transform=reshape_transform) as cam:
-            grayscale_cam = cam(input_tensor=perturbed_images, targets=[ClassifierOutputTarget(class_idx)] * len(perturbed_images))
+            grayscale_cam = cam(input_tensor=perturbed_images,
+                                targets=[ClassifierOutputTarget(class_idx)] * len(perturbed_images))
             explanations = overlay_heatmaps(grayscale_cam, perturbed_images)
 
             pred_labels = None

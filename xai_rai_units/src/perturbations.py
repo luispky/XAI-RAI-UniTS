@@ -41,40 +41,6 @@ def noisy_image_linspace(image, magnitude, n, seed=None):
 
     return image_linspace(image, noise, n)
 
-def generate_noisy_images(
-        image: torch.Tensor,
-        magnitude: float,
-        n_images: int,
-) -> torch.Tensor:
-    """
-    Generates a sequence of noisy images following the formula:
-    image[i] = original image + normal random noise * magnitude * i / n_images
-    
-        :param image: Input image tensor with shape (C, H, W) or (1, C, H, W).
-    :param n_images: Number of noisy images to generate.
-    :param magnitude: Scale of the noise to add.
-    :return: A tensor of noisy images with shape (n_images, C, H, W).
-    """
-    # Ensure input image has shape (1, C, W, H)
-    if image.dim() == 3:
-        image = image.unsqueeze(0)  # Add batch dimension
-    elif image.dim() != 4 or image.size(0) != 1:
-        raise ValueError("Input image must have shape (C, W, H) or (1, C, W, H).")
-
-    # Extract image dimensions
-    _, C, W, H = image.shape
-    
-    # Generate normal random noise for all images in the sequence
-    noise = torch.randn((n_images, C, W, H))
-
-    # Create scaling factors
-    scaling_factors = torch.linspace(0, magnitude, steps=n_images).view(-1, 1, 1, 1)
-
-    # Add scaled noise to the image
-    noisy_images = image + noise * scaling_factors
-
-    return noisy_images
-
 def blur_image_linspace(image, magnitude, n, epsilon=1e-3):
     """
     Creates a linspace of increasingly blurred images
@@ -173,3 +139,38 @@ def the_void_linspace(image, magnitude, n, fill_value=0):
         out.append(image * mask + fill_value * (1 - mask))
 
     return torch.stack(out)
+
+
+def inverse_gradient(image, model, i_class, epsilon=0.1):  # todo work in prpgress
+    """
+    Perturbs an image in the direction of the gradient of the output w.r.t the input
+
+    Args:
+        image (Tensor): Image of shape (C, H, W)
+        model (nn.Module): A PyTorch model
+        i_class (int): Index of the class to compute the gradient w.r.t
+        epsilon (float): Perturbation magnitude
+
+    Returns:
+        Tensor: Image of shape (C, H, W)
+    """
+
+    # Set the model to evaluation mode
+    model.eval()
+
+    # Forward pass through the model
+    input_tensor = image.clone().detach().requires_grad_(True)
+    input_tensor = input_tensor.unsqueeze(0)
+    output = model(input_tensor)
+
+    # Compute gradients of the output with respect to the input
+    output_class = output[0, i_class]  # Selecting the first class output
+    output_class.backward()  # Compute gradients
+
+    # Gradient of the output w.r.t the input
+    gradients = input_tensor.grad
+
+    # modify the input
+    new_input = input_tensor + epsilon * gradients
+
+    return new_input.squeeze(0)
