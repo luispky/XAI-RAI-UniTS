@@ -334,10 +334,10 @@ def load_local_images(filename: Union[str, List[str]], img_size: int = 224) -> t
     transforms_pipeline = transforms.Compose([
         transforms.Resize((img_size, img_size)),  # Resize to img_size x img_size
         transforms.ToTensor(),  # Convert image to tensor
-        transforms.Normalize(
-            mean=[0.485, 0.456, 0.406],  # Normalize using ImageNet mean
-            std=[0.229, 0.224, 0.225],  # Normalize using ImageNet std
-        ),
+        # transforms.Normalize(
+            # mean=[0.485, 0.456, 0.406],  # Normalize using ImageNet mean
+            # std=[0.229, 0.224, 0.225],  # Normalize using ImageNet std
+        # ),
     ])
 
     # Ensure filename is a list
