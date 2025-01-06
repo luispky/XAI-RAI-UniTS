@@ -41,40 +41,6 @@ def noisy_image_linspace(image, magnitude, n, seed=None):
 
     return image_linspace(image, noise, n)
 
-def generate_noisy_images(
-        image: torch.Tensor,
-        magnitude: float,
-        n_images: int,
-) -> torch.Tensor:
-    """
-    Generates a sequence of noisy images following the formula:
-    image[i] = original image + normal random noise * magnitude * i / n_images
-    
-        :param image: Input image tensor with shape (C, H, W) or (1, C, H, W).
-    :param n_images: Number of noisy images to generate.
-    :param magnitude: Scale of the noise to add.
-    :return: A tensor of noisy images with shape (n_images, C, H, W).
-    """
-    # Ensure input image has shape (1, C, W, H)
-    if image.dim() == 3:
-        image = image.unsqueeze(0)  # Add batch dimension
-    elif image.dim() != 4 or image.size(0) != 1:
-        raise ValueError("Input image must have shape (C, W, H) or (1, C, W, H).")
-
-    # Extract image dimensions
-    _, C, W, H = image.shape
-    
-    # Generate normal random noise for all images in the sequence
-    noise = torch.randn((1, C, W, H))
-
-    # Create scaling factors
-    scaling_factors = torch.linspace(0, magnitude, steps=n_images).view(-1, 1, 1, 1)
-
-    # Add scaled noise to the image
-    noisy_images = image + noise * scaling_factors
-
-    return noisy_images
-
 def blur_image_linspace(image, magnitude, n, epsilon=1e-3):
     """
     Creates a linspace of increasingly blurred images

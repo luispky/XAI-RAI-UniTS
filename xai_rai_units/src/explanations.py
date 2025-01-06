@@ -23,6 +23,7 @@ from xai_rai_units.src.utils import (
     overlay_heatmaps,
 )
 
+
 # Constants for methods
 GRADCAM_METHODS = {
     "GradCAM": GradCAM,
@@ -44,6 +45,9 @@ SUPPORTED_LIBRARIES = {"gradcam", "captum"}
 
 
 class ExplanationGenerator:
+    """
+    # todo comment
+    """
     def __init__(self, model: nn.Module, library: str, method: str):
         """
         Initialize the explanation generator for the given library and method.
@@ -100,7 +104,8 @@ class ExplanationGenerator:
             raise ValueError("`target_layers` must be provided for Grad-CAM methods.")
 
         with explainer(model=self.model, target_layers=target_layers, reshape_transform=reshape_transform) as cam:
-            grayscale_cam = cam(input_tensor=perturbed_images, targets=[ClassifierOutputTarget(class_idx)] * len(perturbed_images))
+            grayscale_cam = cam(input_tensor=perturbed_images,
+                                targets=[ClassifierOutputTarget(class_idx)] * len(perturbed_images))
             explanations = overlay_heatmaps(grayscale_cam, perturbed_images)
 
             pred_labels = None
