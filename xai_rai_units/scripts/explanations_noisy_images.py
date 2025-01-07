@@ -1,5 +1,5 @@
 from xai_rai_units.src.explanations import ExplanationGenerator
-from xai_rai_units.src.perturbations import noisy_image_linspace
+from xai_rai_units.src.perturbations import gaussian_perturbation_linspace
 from xai_rai_units.src.utils import (
     load_local_images,
     set_seed,
@@ -8,7 +8,8 @@ from xai_rai_units.src.utils import (
 )
 
 
-def main(library="gradcam", method="GradCAM", model_name="alexnet", n_images=16, magnitude=0.1, seed=42):
+def main(library="gradcam", method="GradCAM", model_name="alexnet",
+         filename="llama", n_images=16, magnitude=0.1, seed=42):
     """
     Main function to generate visual explanations for a given image using Grad-CAM or Captum methods.
 
@@ -22,13 +23,11 @@ def main(library="gradcam", method="GradCAM", model_name="alexnet", n_images=16,
     # Set the random seed for reproducibility
     set_seed(seed)
 
-    # Define the image filename (assumes the image is stored locally)
-    filename = "llama"
     # Load and preprocess the image
     preprocessed_image = load_local_images(filename)
 
     # Generate a sequence of noisy images for perturbation analysis
-    noisy_images = noisy_image_linspace(preprocessed_image, magnitude, n_images)
+    noisy_images = gaussian_perturbation_linspace(preprocessed_image, magnitude, n_images)
 
     # Configure the model, target layers, and reshape transformation based on the model architecture
     model, target_layers, reshape_transform = setup_model_and_layers(model_name)
@@ -37,13 +36,13 @@ def main(library="gradcam", method="GradCAM", model_name="alexnet", n_images=16,
     generator = ExplanationGenerator(model, library, method)
 
     # Generate explanations and optionally retrieve predicted labels
-    explanations, pred_labels, noise_fraction_changes, _   = generator.generate_explanations(
+    explanations, pred_labels, noise_fraction_changes, _ = generator.generate_explanations(
         noisy_images,
         filename,
         target_layers,
         reshape_transform
     )
-    
+
     # Print header with proper alignment
     print(f"{'Label':<15} | {'Percentage of Noise':<20}")
     print('-' * 40)  # Separator line for better readability
@@ -60,5 +59,10 @@ def main(library="gradcam", method="GradCAM", model_name="alexnet", n_images=16,
         filename=f"{library}_{filename.split('.')[0]}_{model_name}"
     )
 
+
 if __name__ == "__main__":
-    main(library="gradcam", method="GradCAM", model_name="resnet50", magnitude=0.5, seed=42)
+    main(library="gradcam",
+         method="GradCAM",
+         model_name="resnet50",
+         magnitude=0.5,
+         seed=42)
