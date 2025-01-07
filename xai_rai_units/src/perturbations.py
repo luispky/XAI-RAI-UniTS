@@ -142,39 +142,52 @@ def void_perturbation_linspace(image, magnitude, n, fill_value=0):
     return torch.stack(out)
 
 
-def inverse_gradient(image, model, i_class, epsilon=0.1):  # todo work in prpgress
+def inv_grad_perturbation(image, model, i_class):
     """
     Perturbs an image in the direction of the gradient of the output w.r.t the input
 
     Args:
         image (Tensor): Image of shape (C, H, W)
         model (nn.Module): A PyTorch model
-        i_class (int): Index of the class to compute the gradient w.r.t
-        epsilon (float): Perturbation magnitude
+        i_class (int): Index of the class to compute the gradient w.r.t the input
 
     Returns:
-        Tensor: Image of shape (C, H, W)
+        Tensor: Gradient of shape (C, H, W)
     """
 
-    # Set the model to evaluation mode
-    model.eval()
+    input_tensor = image.clone()
+    input_tensor.requires_grad = True
+    input_tensor.retain_grad()
 
-    # Forward pass through the model
-    input_tensor = image.clone().detach().requires_grad_(True)
-    input_tensor = input_tensor.unsqueeze(0)
-    output = model(input_tensor)
+    # Unsqueeze the tensor before feeding it to the model
+    input_tensor_for_model = input_tensor.unsqueeze(0)
+    output = model(input_tensor_for_model)
 
     # Compute gradients of the output with respect to the input
-    output_class = output[0, i_class]  # Selecting the first class output
-    output_class.backward()  # Compute gradients
+    output_class = output[0, i_class]
+    output_class.backward()
+    grad = input_tensor.grad
 
-    # Gradient of the output w.r.t the input
-    gradients = input_tensor.grad
+    return grad
 
-    # modify the input
-    new_input = input_tensor + epsilon * gradients
 
-    return new_input.squeeze(0)
+def inv_grad_perturbation_linspace(image, model, i_class, magnitude, n):
+    """
+    Creates a linspace of images between image and image + noise
+
+    Args:
+        image (Tensor): Image of shape (C, H, W)
+        model (nn.Module): A PyTorch model
+        i_class (int): Index of the class to compute the gradient w.r.t the input
+        magnitude (float): Maximum perturbation magnitude
+        n (int): Number of samples to take
+
+    Returns:
+        Tensor: Image of shape (n, C, H, W)
+    """
+    grad = inv_grad_perturbation(image, model, i_class)
+    noise = grad * magnitude
+    return image_linspace(image, noise, n)
 
 
 def overlay_pattern(image, pattern, magnitude):
@@ -191,8 +204,11 @@ def overlay_pattern(image, pattern, magnitude):
     """
 
     # repeat periodically the pattern until it reaches the image size
-    pattern_2 = pattern.repeat(1, image.shape[1] // pattern.shape[1] + 1, image.shape[2] // pattern.shape[2] + 1)
-    pattern_2 = pattern_2[:, :image.shape[1], :image.shape[2]]
+    c, h, w = image.shape
+    n_x = h // pattern.shape[1] + 1
+    n_y = w // pattern.shape[2] + 1
+    pattern_2 = pattern.repeat(1, n_x, n_y)
+    pattern_2 = pattern_2[:, :h, :w]
 
     # overlay the pattern
     return image + magnitude * pattern_2

@@ -7,7 +7,7 @@ import os
 from PIL import Image
 
 
-def download_alexnet(model_path):
+def download_alexnet(model_path, weights_only=True):
     """
     A function to download and save the AlexNet model. If the model
     already exists, it will be loaded from the disk.
@@ -24,7 +24,7 @@ def download_alexnet(model_path):
     else:
         print(">>> Model already downloaded.")
         model = torchvision.models.alexnet()
-        model.load_state_dict(torch.load(model_path))
+        model.load_state_dict(torch.load(model_path, weights_only=weights_only))
     return model
 
 
