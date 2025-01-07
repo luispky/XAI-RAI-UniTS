@@ -485,3 +485,30 @@ def setup_model_and_layers(model_name: str) -> Tuple[nn.Module, List[nn.Module],
         raise ValueError(f"Unsupported model: {model_name}")
 
     return model, target_layers, reshape_transform
+
+
+def mean_square_error_difference(heatmap1, heatmap2):
+    """Computes the mean squared error between two heatmaps."""
+    return np.mean((heatmap1 - heatmap2) ** 2)
+
+
+def heatmap_entropy(heatmap, epsilon=1e-10):
+    """Computes the entropy of a heatmap."""
+    return -np.mean(heatmap * np.log(heatmap + epsilon))
+
+
+def heatmap_barycenter(heatmap):
+    """Computes the center of the probability mass in a heatmap."""
+    h, w = heatmap.shape
+    y, x = np.mgrid[:h, :w]
+    return np.sum(x * heatmap), np.sum(y * heatmap)
+
+
+def heatmap_dispersion(heatmap):
+    """Computes the dispersion (std) of the probability mass in a heatmap."""
+    h, w = heatmap.shape
+    y, x = np.mgrid[:h, :w]
+    mx, my = heatmap_barycenter(heatmap)
+    var_x = np.mean((x - mx) ** 2 * heatmap)
+    var_y = np.mean((y - my) ** 2 * heatmap)
+    return np.sqrt(var_x + var_y)

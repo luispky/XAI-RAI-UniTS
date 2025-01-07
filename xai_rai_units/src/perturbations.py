@@ -20,7 +20,7 @@ def image_linspace(image, noise, n=100):
     return segment
 
 
-def noisy_image_linspace(image, magnitude, n, seed=None):
+def gaussian_perturbation_linspace(image, magnitude, n, seed=None):
     """
     Creates a linspace of images between image and image + noise
 
@@ -41,7 +41,8 @@ def noisy_image_linspace(image, magnitude, n, seed=None):
 
     return image_linspace(image, noise, n)
 
-def blur_image_linspace(image, magnitude, n, epsilon=1e-3):
+
+def blur_perturbation_linspace(image, magnitude, n, epsilon=1e-3):
     """
     Creates a linspace of increasingly blurred images
 
@@ -65,7 +66,7 @@ def blur_image_linspace(image, magnitude, n, epsilon=1e-3):
     return torch.stack(out)
 
 
-def occlusion_linspace(image, magnitude, n, fill_value=0):
+def occlusion_perturbation_linspace(image, magnitude, n, fill_value=0):
     """
     Creates a linspace of increasingly occluded images
 
@@ -114,7 +115,7 @@ def gaussian_kernel(kernel_size, sigma):
     return kernel
 
 
-def the_void_linspace(image, magnitude, n, fill_value=0):
+def void_perturbation_linspace(image, magnitude, n, fill_value=0):
     """
     Creates a linspace of increasingly voided images
 
@@ -174,3 +175,24 @@ def inverse_gradient(image, model, i_class, epsilon=0.1):  # todo work in prpgre
     new_input = input_tensor + epsilon * gradients
 
     return new_input.squeeze(0)
+
+
+def overlay_pattern(image, pattern, magnitude):
+    """
+    Overlay a pattern on an image
+
+    Args:
+        image (Tensor): Image of shape (C, H, W)
+        pattern (Tensor): Pattern of smaller shape
+        magnitude (float): Magnitude of the pattern
+
+    Returns:
+        Tensor: Image of shape (C, H, W)
+    """
+
+    # repeat periodically the pattern until it reaches the image size
+    pattern_2 = pattern.repeat(1, image.shape[1] // pattern.shape[1] + 1, image.shape[2] // pattern.shape[2] + 1)
+    pattern_2 = pattern_2[:, :image.shape[1], :image.shape[2]]
+
+    # overlay the pattern
+    return image + magnitude * pattern_2
