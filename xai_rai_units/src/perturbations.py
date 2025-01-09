@@ -20,7 +20,7 @@ def image_linspace(image, noise, n=100):
     return segment
 
 
-def gaussian_perturbation_linspace(image, magnitude, n, seed=None):
+def gaussian_perturbation_linspace(image, magnitude, n, model=None, seed=None):
     """
     Creates a linspace of images between image and image + noise
 
@@ -28,6 +28,7 @@ def gaussian_perturbation_linspace(image, magnitude, n, seed=None):
         image (Tensor): A tensor of shape (n, C, H, W)
         magnitude (float): Maximum perturbation magnitude
         n (int): Number of samples to take
+        model (nn.Module): A PyTorch model
         seed (int or None): Random seed
 
     Returns:
@@ -42,7 +43,7 @@ def gaussian_perturbation_linspace(image, magnitude, n, seed=None):
     return image_linspace(image, noise, n)
 
 
-def blur_perturbation_linspace(image, magnitude, n, epsilon=1e-3):
+def blur_perturbation_linspace(image, magnitude, n, model=None, epsilon=1e-3):
     """
     Creates a linspace of increasingly blurred images
 
@@ -50,6 +51,7 @@ def blur_perturbation_linspace(image, magnitude, n, epsilon=1e-3):
         image (Tensor): A tensor of shape (n, C, H, W)
         magnitude (float): Maximum blur magnitude (number of pixels)
         n (int): Number of samples to take
+        model (nn.Module): A PyTorch model
         epsilon (float): Minimum standard deviation (must be positive)
 
     Returns:
@@ -66,7 +68,7 @@ def blur_perturbation_linspace(image, magnitude, n, epsilon=1e-3):
     return torch.stack(out)
 
 
-def occlusion_perturbation_linspace(image, magnitude, n, fill_value=0):
+def occlusion_perturbation_linspace(image, magnitude, n, model=None, fill_value=0):
     """
     Creates a linspace of increasingly occluded images
 
@@ -74,6 +76,7 @@ def occlusion_perturbation_linspace(image, magnitude, n, fill_value=0):
         image (Tensor): A tensor of shape (n, C, H, W)
         magnitude (float): Maximum size of the occlusion (number of pixels)
         n (int): Number of samples to take
+        model (nn.Module): A PyTorch model
         fill_value (int): Value to fill the occlusion with
 
     Return:
@@ -115,7 +118,7 @@ def gaussian_kernel(kernel_size, sigma):
     return kernel
 
 
-def void_perturbation_linspace(image, magnitude, n, fill_value=0):
+def void_perturbation_linspace(image, magnitude, n, model=None, fill_value=0):
     """
     Creates a linspace of increasingly voided images
 
@@ -123,6 +126,7 @@ def void_perturbation_linspace(image, magnitude, n, fill_value=0):
         image (Tensor): A tensor of shape (n, C, H, W)
         magnitude (float): Maximum size of the void (number of pixels)
         n (int): Number of samples to take
+        model (nn.Module): A PyTorch model
         fill_value (int): Value to fill the void with
 
     Returns:
@@ -171,16 +175,16 @@ def inv_grad_perturbation(image, model, i_class):
     return grad
 
 
-def inv_grad_perturbation_linspace(image, model, i_class, magnitude, n):
+def inv_grad_perturbation_linspace(image, magnitude, n, model, i_class=0):
     """
     Creates a linspace of images between image and image + noise
 
     Args:
         image (Tensor): Image of shape (C, H, W)
-        model (nn.Module): A PyTorch model
-        i_class (int): Index of the class to compute the gradient w.r.t the input
         magnitude (float): Maximum perturbation magnitude
         n (int): Number of samples to take
+        model (nn.Module): A PyTorch model
+        i_class (int): Index of the class to compute the gradient w.r.t the input
 
     Returns:
         Tensor: Image of shape (n, C, H, W)

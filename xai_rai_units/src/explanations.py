@@ -105,7 +105,7 @@ class ExplanationGenerator:
         
         n_images = len(perturbed_images)
         # Compute the fraction of noise that caused a change in the predicted label
-        changes = np.array([i for i in range(1, n_images) if predicted_labels[i] != predicted_labels[i-1]])
+        changes = np.array([i for i in range(1, n_images) if predicted_labels[i] != predicted_labels[i-1]], dtype=int)
         changes = np.insert(changes, 0, 0) # Include the first image with 0 noise
         noise_fraction_changes = changes / n_images
         
@@ -137,7 +137,7 @@ class ExplanationGenerator:
 
         with explainer(model=self.model, target_layers=target_layers, reshape_transform=reshape_transform) as cam:
             attributions = cam(input_tensor=perturbed_images,
-                                targets=[ClassifierOutputTarget(class_idx)] * len(perturbed_images))
+                               targets=[ClassifierOutputTarget(class_idx)] * len(perturbed_images))
             explanations = overlay_heatmaps(attributions, perturbed_images)
 
             outputs = cam.outputs
