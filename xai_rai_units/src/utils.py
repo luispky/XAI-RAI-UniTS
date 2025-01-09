@@ -1,20 +1,21 @@
 import os
 import numpy as np
-import torch
-import torchvision
-import torch.nn as nn
 import matplotlib.pyplot as plt
-from torchvision import datasets, transforms
-from torch.utils.data import DataLoader
-from typing import Dict, Union, List, Optional, Tuple, Callable
-from PIL import Image
 import random
 import tarfile
 import requests
+import timm
+import torch
+import torch.nn as nn
+from torch.utils.data import DataLoader
+import torchvision
+from torchvision import datasets, transforms
 from torchvision.models import resnet50, ResNet50_Weights
 from torchvision.models import alexnet, AlexNet_Weights
-import timm
-from xai_rai_units.src.paths import FIGURES_DIR, DATASETS_DIR, IMAGE_DIR
+from safetensors.torch import save_file, load_file
+from typing import Dict, Union, List, Optional, Tuple, Callable
+from PIL import Image
+from xai_rai_units.src.paths import FIGURES_DIR, DATASETS_DIR, IMAGE_DIR, MODELS_DIR
 from pytorch_grad_cam.utils.image import show_cam_on_image
 
 
@@ -400,6 +401,67 @@ def load_model(model_name):
         return timm.create_model('vit_tiny_patch16_224', pretrained=True)
     else:
         raise ValueError(f"Model {model_name} is not supported.")
+
+
+def download_and_save_model_weights(model_name, model, weights_path):
+    """
+    Downloads and saves the model weights to the specified path in SafeTensors format.
+    
+    Parameters:
+    - model_name: str, the name of the model.
+    - model: nn.Module, the model instance.
+    - weights_path: str, the path to save the weights.
+    """
+    state_dict = model.state_dict()
+    save_file(state_dict, weights_path)
+    print(f"Weights for {model_name} saved to {weights_path}.")
+
+
+def load_model(model_name):
+    """
+    Loads a pretrained model, downloading weights if not already stored locally.
+    
+    Parameters:
+    - model_name: str, the name of the model to load.
+    
+    Returns:
+    - model: nn.Module, the loaded model instance.
+    """
+    weights_path = os.path.join(MODELS_DIR, f"{model_name}_weights.safetensors")
+    
+    if os.path.exists(weights_path):
+        # If weights already exist, load them using SafeTensors
+        print(f"Loading {model_name} weights from {weights_path}.")
+        if model_name == "alexnet":
+            model = alexnet()
+        elif model_name == "resnet50":
+            model = resnet50()
+        elif model_name == "swin_transformer":
+            model = timm.create_model("swin_base_patch4_window7_224", pretrained=False)
+        elif model_name == "vit":
+            model = timm.create_model("vit_tiny_patch16_224", pretrained=False)
+        else:
+            raise ValueError(f"Model {model_name} is not supported.")
+        
+        state_dict = load_file(weights_path)
+        model.load_state_dict(state_dict)
+    else:
+        # Download weights and save them in SafeTensors format
+        print(f"Downloading weights for {model_name}.")
+        if model_name == "alexnet":
+            model = alexnet(weights=AlexNet_Weights.IMAGENET1K_V1)
+        elif model_name == "resnet50":
+            model = resnet50(weights=ResNet50_Weights.IMAGENET1K_V1)
+        elif model_name == "swin_transformer":
+            model = timm.create_model("swin_base_patch4_window7_224", pretrained=True)
+        elif model_name == "vit":
+            model = timm.create_model("vit_tiny_patch16_224", pretrained=True)
+        else:
+            raise ValueError(f"Model {model_name} is not supported.")
+        
+        download_and_save_model_weights(model_name, model, weights_path)
+    
+    return model
 
 
 def reshape_transform_swin_transformer(tensor, height=7, width=7):

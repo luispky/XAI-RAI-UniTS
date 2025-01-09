@@ -61,4 +61,4 @@ def main(library="gradcam", method="GradCAM", model_name="alexnet", n_images=16,
     )
 
 if __name__ == "__main__":
-    main(library="gradcam", method="GradCAM", model_name="resnet50", magnitude=0.5, seed=42)
+    main(library="gradcam", method="GradCAM", model_name="alexnet", magnitude=0.5, seed=42)
