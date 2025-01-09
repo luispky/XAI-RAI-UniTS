@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-from xai_rai_units.src.perturbations import noisy_image_linspace
+from xai_rai_units.src.perturbations import gaussian_perturbation_linspace
 
 
 class MeasureProba:
@@ -38,7 +38,7 @@ class MeasureProba:
             - 'max_class_index': The index of the class with the highest probability
             - 'final_image': The final image in the segment
         """
-        segment = noisy_image_linspace(image, magnitude, n, seed=seed)
+        segment = gaussian_perturbation_linspace(image, magnitude, n, seed=seed)
 
         with torch.no_grad():
             logits = self.model(segment)

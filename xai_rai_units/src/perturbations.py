@@ -20,7 +20,7 @@ def image_linspace(image, noise, n=100):
     return segment
 
 
-def noisy_image_linspace(image, magnitude, n, seed=None):
+def gaussian_perturbation_linspace(image, magnitude, n, seed=None):
     """
     Creates a linspace of images between image and image + noise
 
@@ -41,7 +41,8 @@ def noisy_image_linspace(image, magnitude, n, seed=None):
 
     return image_linspace(image, noise, n)
 
-def blur_image_linspace(image, magnitude, n, epsilon=1e-3):
+
+def blur_perturbation_linspace(image, magnitude, n, epsilon=1e-3):
     """
     Creates a linspace of increasingly blurred images
 
@@ -65,7 +66,7 @@ def blur_image_linspace(image, magnitude, n, epsilon=1e-3):
     return torch.stack(out)
 
 
-def occlusion_linspace(image, magnitude, n, fill_value=0):
+def occlusion_perturbation_linspace(image, magnitude, n, fill_value=0):
     """
     Creates a linspace of increasingly occluded images
 
@@ -114,7 +115,7 @@ def gaussian_kernel(kernel_size, sigma):
     return kernel
 
 
-def the_void_linspace(image, magnitude, n, fill_value=0):
+def void_perturbation_linspace(image, magnitude, n, fill_value=0):
     """
     Creates a linspace of increasingly voided images
 
@@ -141,36 +142,73 @@ def the_void_linspace(image, magnitude, n, fill_value=0):
     return torch.stack(out)
 
 
-def inverse_gradient(image, model, i_class, epsilon=0.1):  # todo work in prpgress
+def inv_grad_perturbation(image, model, i_class):
     """
     Perturbs an image in the direction of the gradient of the output w.r.t the input
 
     Args:
         image (Tensor): Image of shape (C, H, W)
         model (nn.Module): A PyTorch model
-        i_class (int): Index of the class to compute the gradient w.r.t
-        epsilon (float): Perturbation magnitude
+        i_class (int): Index of the class to compute the gradient w.r.t the input
+
+    Returns:
+        Tensor: Gradient of shape (C, H, W)
+    """
+
+    input_tensor = image.clone()
+    input_tensor.requires_grad = True
+    input_tensor.retain_grad()
+
+    # Unsqueeze the tensor before feeding it to the model
+    input_tensor_for_model = input_tensor.unsqueeze(0)
+    output = model(input_tensor_for_model)
+
+    # Compute gradients of the output with respect to the input
+    output_class = output[0, i_class]
+    output_class.backward()
+    grad = input_tensor.grad
+
+    return grad
+
+
+def inv_grad_perturbation_linspace(image, model, i_class, magnitude, n):
+    """
+    Creates a linspace of images between image and image + noise
+
+    Args:
+        image (Tensor): Image of shape (C, H, W)
+        model (nn.Module): A PyTorch model
+        i_class (int): Index of the class to compute the gradient w.r.t the input
+        magnitude (float): Maximum perturbation magnitude
+        n (int): Number of samples to take
+
+    Returns:
+        Tensor: Image of shape (n, C, H, W)
+    """
+    grad = inv_grad_perturbation(image, model, i_class)
+    noise = grad * magnitude
+    return image_linspace(image, noise, n)
+
+
+def overlay_pattern(image, pattern, magnitude):
+    """
+    Overlay a pattern on an image
+
+    Args:
+        image (Tensor): Image of shape (C, H, W)
+        pattern (Tensor): Pattern of smaller shape
+        magnitude (float): Magnitude of the pattern
 
     Returns:
         Tensor: Image of shape (C, H, W)
     """
 
-    # Set the model to evaluation mode
-    model.eval()
+    # repeat periodically the pattern until it reaches the image size
+    c, h, w = image.shape
+    n_x = h // pattern.shape[1] + 1
+    n_y = w // pattern.shape[2] + 1
+    pattern_2 = pattern.repeat(1, n_x, n_y)
+    pattern_2 = pattern_2[:, :h, :w]
 
-    # Forward pass through the model
-    input_tensor = image.clone().detach().requires_grad_(True)
-    input_tensor = input_tensor.unsqueeze(0)
-    output = model(input_tensor)
-
-    # Compute gradients of the output with respect to the input
-    output_class = output[0, i_class]  # Selecting the first class output
-    output_class.backward()  # Compute gradients
-
-    # Gradient of the output w.r.t the input
-    gradients = input_tensor.grad
-
-    # modify the input
-    new_input = input_tensor + epsilon * gradients
-
-    return new_input.squeeze(0)
+    # overlay the pattern
+    return image + magnitude * pattern_2

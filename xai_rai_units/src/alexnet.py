@@ -7,7 +7,7 @@ import os
 from PIL import Image
 
 
-def download_alexnet(model_path):
+def download_alexnet(model_path, weights_only=True):
     """
     A function to download and save the AlexNet model. If the model
     already exists, it will be loaded from the disk.
@@ -24,7 +24,7 @@ def download_alexnet(model_path):
     else:
         print(">>> Model already downloaded.")
         model = torchvision.models.alexnet()
-        model.load_state_dict(torch.load(model_path))
+        model.load_state_dict(torch.load(model_path, weights_only=weights_only))
     return model
 
 
@@ -53,6 +53,7 @@ def transformation(resize=224, size=224, clamp=False):
     Args:
         resize (int): size to resize the image
         size (int): size to crop the image
+        clamp (bool): whether to clamp the pixel values
 
     Returns:
         torchvision.transforms.Compose: a sequence of transformations
@@ -90,7 +91,8 @@ def load_images(image_dir: str, n=16):
         if img.mode == 'RGBA':
             img = img.convert('RGB')
 
-        print(f"\r>>> Loading image ({i+1}/{len(filenames)}): {img_path} size: {img.size} {img.mode}", end='   ')
+        print(f"\r>>> Loading image ({i+1}/{len(filenames)}): "
+              f"{img_path} size: {img.size} {img.mode}", end='   ')
 
         img_tensor = transformation()(img)
         images.append(img_tensor)
