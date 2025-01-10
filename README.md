@@ -12,7 +12,7 @@
 #### 📚 University of Trieste, Academic Year 2024–2025  
 #### 🎓 Data Science and Artificial Intelligence Master's Program  
 
-[![Logo](figures/gradcam_llama_alexnet.png)](https://github.com/luispky/XAI-RAI-UniTS)
+[![Logo](figures/gradcam_llama_resnet50.png)](https://github.com/luispky/XAI-RAI-UniTS)
 
 </div>
 
