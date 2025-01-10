@@ -65,8 +65,8 @@ def main(library="gradcam", method="GradCAM", model_name="alexnet",
                 filename=f"{library}_{filename.split('.')[0]}_{model_name}"
             )
         except Exception as e:
-            print(f"Error processing image {filename}: {e}")
-
+            print(f"\n ❌ Error processing image {filename}: {e}")
+            continue
 
 if __name__ == "__main__":
     main(library="gradcam", method="GradCAM", model_name="alexnet", magnitude=0.5, seed=42)

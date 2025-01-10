@@ -91,7 +91,7 @@ class ExplanationGenerator:
         # Preprocess the class label
         class_idx = preprocess_class_label(class_label_imagenet)
 
-        print(f"\nGenerating explanations using the {self.method} method"
+        print(f"\n 🚧 Generating explanations using the {self.method} method"
               f" from the {self.library} library for the class {class_label_imagenet}"
               f" from the ImageNet dataset.")
         
