@@ -8,6 +8,7 @@ from xai_rai_units.src.utils import (
     sample_filenames
 )
 
+import sys
 
 def main(library="gradcam", method="GradCAM", model_name="alexnet",
          filename="monarch", n_images=16, magnitude=0.1, seed=42):
@@ -26,6 +27,7 @@ def main(library="gradcam", method="GradCAM", model_name="alexnet",
 
     # Define the image filename (assumes the image is stored locally)
     filenames = sample_filenames()
+    # Load and preprocess the image
     images = load_local_images(filenames)
     
     # Configure the model, target layers, and reshape transformation based on the model architecture
@@ -33,8 +35,6 @@ def main(library="gradcam", method="GradCAM", model_name="alexnet",
     
     for filename, image in zip(filenames, images):
         try:
-            # Load and preprocess the image
-
             # Generate a sequence of noisy images for perturbation analysis
             noisy_images = gaussian_perturbation_linspace(image, magnitude, n_images)
 
@@ -43,10 +43,11 @@ def main(library="gradcam", method="GradCAM", model_name="alexnet",
 
             # Generate explanations and optionally retrieve predicted labels
             explanations, pred_labels, noise_fraction_changes, _   = generator.generate_explanations(
-                noisy_images,
-                filename,
-                target_layers,
-                reshape_transform
+                perturbed_images=noisy_images,
+                class_label_filename_imagenet=filename,
+                target_layers=target_layers,
+                reshape_transform=reshape_transform, 
+                resnet50_likely_class=False
             )
             
             # Print header with proper alignment
@@ -64,10 +65,11 @@ def main(library="gradcam", method="GradCAM", model_name="alexnet",
                 save_fig=True,
                 filename=f"{library}_{filename.split('.')[0]}_{model_name}"
             )
+        
         except Exception as e:
             print(f"\n ❌ Error processing image {filename}: {e}")
             continue
 
 if __name__ == "__main__":
-    main(library="gradcam", method="GradCAM", model_name="resnet50",
+    main(library="gradcam", method="GradCAM", model_name="alexnet",
          magnitude=0.5, seed=42)

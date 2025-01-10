@@ -444,7 +444,7 @@ def compute_classes_proportion_dataloder(loader):
     return unique, np.round(counts / len(labels), 2)
 
 
-def download_and_save_model_weights(model_name, model, weights_path):
+def download_and_save_model_weights(model_name, model, weights_path, verbose: bool = False):
     """
     Downloads and saves the model weights to the specified path in SafeTensors format.
     
@@ -455,10 +455,11 @@ def download_and_save_model_weights(model_name, model, weights_path):
     """
     state_dict = model.state_dict()
     save_file(state_dict, weights_path)
-    print(f"Weights for {model_name} saved to {weights_path}.")
+    if verbose:
+        print(f"Weights for {model_name} saved to {weights_path}.")
 
 
-def load_model(model_name):
+def load_model(model_name, verbose: bool =False):
     """
     Loads a pretrained model, downloading weights if not already stored locally.
     
@@ -472,7 +473,8 @@ def load_model(model_name):
     
     if os.path.exists(weights_path):
         # If weights already exist, load them using SafeTensors
-        print(f"Loading {model_name} weights from {weights_path}.")
+        if verbose:
+            print(f"Loading {model_name} weights from {weights_path}.")
         if model_name == "alexnet":
             model = alexnet()
         elif model_name == "resnet50":
@@ -500,9 +502,63 @@ def load_model(model_name):
         else:
             raise ValueError(f"Model {model_name} is not supported.")
         
-        download_and_save_model_weights(model_name, model, weights_path)
+        download_and_save_model_weights(model_name, model, weights_path, verbose=verbose)
     
     return model
+
+
+def preprocess_class_label(class_filename: str):
+
+    """Preprocesses and validates the ImageNet class label.
+    
+    :param class_filename: The ImageNet class label to preprocess when loaded from a filename.
+    """
+    # Convert to lowercase
+    class_filename = class_filename.lower()
+    # Remove file extension
+    class_filename = class_filename.split(".")[0]
+    # Remove trailing underscores with numbers
+    class_filename = re.sub(r'_\d+$', '', class_filename)
+    
+    if class_filename not in CLASS_TO_IDX_IMAGENET:
+        raise ValueError(f"Invalid class label '{class_filename}'. Please provide a valid ImageNet class label.")
+    return CLASS_TO_IDX_IMAGENET[class_filename]
+
+
+def imagenet_class_prediction(model_name: str, images: torch.Tensor) -> List[str]:
+    """
+    Predicts ImageNet class labels for a batch of images using a specified model.
+    
+    :param model_name: str, The name of the model to use for prediction (e.g., "resnet50").
+        Currently, only "resnet50" is supported.
+    :param images: torch.Tensor, A batch of preprocessed image tensors with shape (N, C, H, W) 
+        or a single image tensor with shape (C, H, W). If a single image is provided, 
+        it will automatically add a batch dimension.
+    :return: List[str], A list of predicted class labels for the input images.
+    :raises ValueError: If the provided model name is not supported or if input tensor shape is invalid.
+    """
+    # Add a batch dimension if only one image is provided
+    if len(images.shape) == 3:  # Single image (C, H, W)
+        images = images.unsqueeze(0)  # Convert to (1, C, H, W)
+    elif len(images.shape) != 4:  # Invalid shape
+        raise ValueError("Input `images` must be a 4D tensor (N, C, H, W) or a single image (C, H, W).")
+    
+    # Load the specified model
+    if model_name != "resnet50":
+        raise ValueError(f"Model '{model_name}' is not supported. Only 'resnet50' is currently supported.")
+    
+    model = load_model(model_name)
+    model.eval()
+    
+    # Perform prediction
+    with torch.no_grad():
+        outputs = model(images)  # Forward pass
+        predictions = outputs.argmax(dim=1)  # Get indices of max logits
+    
+    # Map indices to class labels
+    predicted_labels = [IDX_TO_CLASS_IMAGENET[idx.item()] for idx in predictions]
+    
+    return predicted_labels
 
 
 def reshape_transform_swin_transformer(tensor, height=7, width=7):
@@ -528,23 +584,6 @@ def reshape_transform_vit(tensor, height=14, width=14):
     # like in CNNs.
     result = result.transpose(2, 3).transpose(1, 2)
     return result
-
-
-def preprocess_class_label(class_label: str) -> int:
-    """Preprocesses and validates the ImageNet class label.
-    
-    :param class_label: The ImageNet class label to preprocess when loaded from a filename.
-    """
-    # Convert to lowercase
-    class_label = class_label.lower()
-    # Remove file extension
-    class_label = class_label.split(".")[0]
-    # Remove trailing underscores with numbers
-    class_label = re.sub(r'_\d+$', '', class_label)
-    
-    if class_label not in CLASS_TO_IDX_IMAGENET:
-        raise ValueError(f"Invalid class label '{class_label}'. Please provide a valid ImageNet class label.")
-    return CLASS_TO_IDX_IMAGENET[class_label]
 
 
 def overlay_heatmaps(attr: np.ndarray, perturbed_images: torch.Tensor) -> torch.Tensor:
@@ -650,3 +689,4 @@ def sample_filenames(directory: str = IMAGE_DIR, n: int = 5) -> List[str]:
     sampled_filenames = [os.path.splitext(f)[0] for f in sampled_files]
 
     return sampled_filenames
+

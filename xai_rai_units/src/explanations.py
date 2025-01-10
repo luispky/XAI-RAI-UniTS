@@ -22,6 +22,7 @@ from xai_rai_units.src.utils import (
     IDX_TO_CLASS_IMAGENET,
     preprocess_class_label,
     overlay_heatmaps,
+    imagenet_class_prediction
 )
 
 # Constants for methods
@@ -71,29 +72,54 @@ class ExplanationGenerator:
     def generate_explanations(
         self,
         perturbed_images: torch.Tensor,
-        class_label_imagenet: str,
+        class_label_filename_imagenet: Optional[str] = None,
         target_layers: Optional[List[Union[nn.Module, nn.Sequential]]] = None,
         reshape_transform: Optional[Callable] = None,
+        resnet50_likely_class: bool = True,
     ) -> Tuple[torch.Tensor, List[str], np.ndarray, Optional[torch.Tensor]]:
         """
         Generate explanations for a batch of perturbed images using the specified library and method.
-        The explanations returned only correspond to the images where the predicted label changed from the original
-        image. The fraction of noise that caused a change in the predicted label is also returned.
+        Explanations are only returned for images where the predicted label changed from the original image.
+        The fraction of noise causing label changes is also returned.
 
-        :param perturbed_images: A batch of perturbed input images from a ImageNet class.
-        :param class_label_imagenet: The ImageNet class label for which explanations are generated.
-        :param target_layers: The target layers for which explanations are generated.
-        :param reshape_transform: A transformation function to reshape the input images when using Grad-CAM methods.
+        :param perturbed_images: torch.Tensor, A batch of perturbed input images (N, C, H, W).
+        :param class_label_filename_imagenet: Optional[str], The ImageNet class label for generating explanations.
+        :param target_layers: Optional[List[Union[nn.Module, nn.Sequential]]], Target layers for explanations.
+        :param reshape_transform: Optional[Callable], Transformation for reshaping input images for Grad-CAM methods.
+        :param resnet50_likely_class: bool, Whether to use ResNet50's most likely class prediction if the class label is not provided or invalid.
 
-        :return: A tuple containing the explanation heatmaps, predicted labels, an array with the fraction of noise
-                that caused a change in the predicted label, and the attributions (if available).
+        :return: Tuple containing:
+            - Explanation heatmaps (torch.Tensor)
+            - Predicted labels (List[str])
+            - Array with the fraction of noise causing label changes (np.ndarray)
+            - Attributions (torch.Tensor or None)
         """
-        # Preprocess the class label
-        class_idx = preprocess_class_label(class_label_imagenet)
+        # Determine the class label index
+        class_idx = None
 
-        print(f"\n 🚧 Generating explanations using the {self.method} method"
-              f" from the {self.library} library for the class {class_label_imagenet}"
-              f" from the ImageNet dataset.")
+        if not resnet50_likely_class:
+            try:
+                class_idx = preprocess_class_label(class_label_filename_imagenet)
+            except Exception as e:
+                resnet50_likely_class = True
+                print(f"\n❌ Error processing class label '{class_label_filename_imagenet}': {str(e)}")
+        
+        if resnet50_likely_class:
+            predicted_label = imagenet_class_prediction(model_name="resnet50", images=perturbed_images[0].unsqueeze(0))
+            if not predicted_label:
+                raise ValueError("Unable to determine the class label using ResNet50.")
+            class_label_filename_imagenet = predicted_label[0]  # Assuming prediction returns a list of labels
+            class_idx = preprocess_class_label(class_label_filename_imagenet)
+
+            print(f"\n🔄 Using ResNet50's predicted likely class: '{class_label_filename_imagenet}' from ImageNet.")
+
+        # Debug message for explanation generation
+        print(
+            f"\n🚧 Generating explanations using the {self.method} method"
+            f" from the {self.library} library"
+            f" for the class '{class_label_filename_imagenet}' (class index: {class_idx})"
+            f" from the ImageNet dataset."
+        )
         
         explanations, predicted_labels, attributions = None, None, None
         if self.library == "gradcam":
