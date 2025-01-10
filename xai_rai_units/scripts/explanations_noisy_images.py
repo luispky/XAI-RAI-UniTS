@@ -10,7 +10,7 @@ from xai_rai_units.src.utils import (
 
 
 def main(library="gradcam", method="GradCAM", model_name="alexnet",
-         filename="llama", n_images=16, magnitude=0.1, seed=42):
+         filename="monarch", n_images=16, magnitude=0.1, seed=42):
     """
     Main function to generate visual explanations for a given image using Grad-CAM or Captum methods.
 
@@ -69,4 +69,5 @@ def main(library="gradcam", method="GradCAM", model_name="alexnet",
             continue
 
 if __name__ == "__main__":
-    main(library="gradcam", method="GradCAM", model_name="alexnet", magnitude=0.5, seed=42)
+    main(library="gradcam", method="GradCAM", model_name="resnet50",
+         magnitude=0.5, seed=42)

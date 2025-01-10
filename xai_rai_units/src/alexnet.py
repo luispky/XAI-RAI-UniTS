@@ -67,21 +67,22 @@ def transformation(resize=224, size=224, clamp=False):
     return transforms.Compose(t)
 
 
-def load_images(image_dir: str, n=16):
+def load_images(image_dir: str, n=None):
     """
     Load and preprocess images from a directory.
 
     Args:
         image_dir (str): path to the directory containing images
-        n (int): number of images to load
+        n (int or None): number of images to load
 
     Returns:
         torch.Tensor: a tensor of shape (n, 3, 224, 224)
     """
     images = []
     filenames = np.array(list(os.listdir(image_dir)))
-    indices = np.random.choice(len(filenames), n, replace=False)
-    filenames = filenames[indices]
+    if n is not None:
+        indices = np.random.choice(len(filenames), n, replace=False)
+        filenames = filenames[indices]
 
     for i, filename in enumerate(filenames):
         img_path = os.path.join(image_dir, filename)
@@ -91,8 +92,8 @@ def load_images(image_dir: str, n=16):
         if img.mode == 'RGBA':
             img = img.convert('RGB')
 
-        print(f"\r>>> Loading image ({i+1}/{len(filenames)}): "
-              f"{img_path} size: {img.size} {img.mode}", end='   ')
+        print(f">>> {i+1:2}/{len(filenames)} | {filename}   "
+              f"{img.size}  {img.mode}")
 
         img_tensor = transformation()(img)
         images.append(img_tensor)
