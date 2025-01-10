@@ -1,5 +1,5 @@
 # Project-related
-figures/
+# figures/
 models/
 results/
 imagenette2-320.tgz
@@ -21,3 +21,17 @@ venv/
 
 # VSCode
 .vscode/
+
+# Bash scripts
+
+
+# Python files
+setup.py
+scripts/accuracy_on_imagenette.py
+scripts/test_alexnet.py
+scripts/test_measure_proba.py
+scripts/test_perturbations.py
+src/alexnet.py
+
+# Git files
+.gitattributes

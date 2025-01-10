@@ -17,7 +17,8 @@ def main(args):
     set_seed(args.seed)
     
     # Sample image filenames
-    filenames = sample_filenames(n=args.sample_images)
+    # filenames = sample_filenames(n=args.sample_images)
+    filenames = ['llama']
     
     # Load and preprocess the images
     images = load_local_images(filenames)
@@ -43,12 +44,12 @@ def main(args):
             )
             
             # Print header with proper alignment
-            print(f"\n{'Label':<15} | {'Percentage of Noise':<20}")
+            print(f"\n{'Label':<20} | {'Percentage of Noise':<20}")
             print('-' * 40)  # Separator line for better readability
 
             # Print each label and noise percentage
             for label, noise in zip(pred_labels, noise_fraction_changes):
-                print(f"{str(label):<15} | {noise:.2f}")
+                print(f"{str(label):<20} | {noise:.2f}")
 
             # Visualize and save the generated explanations
             show_images(
@@ -59,7 +60,7 @@ def main(args):
             )
         
         except Exception as e:
-            print(f"\n ❌ {e}")
+            print(f"\n {e}")
             continue
 
 if __name__ == "__main__":
@@ -72,7 +73,7 @@ if __name__ == "__main__":
                         help="Name of the pre-trained model to use (e.g., 'alexnet', 'resnet50').")
     parser.add_argument("--sample_images", type=int, default=5,
                         help="Number of sample images to process.")
-    parser.add_argument("--n_perturbations", type=int, default=5,
+    parser.add_argument("--n_perturbations", type=int, default=10,
                         help="Number of noisy images to generate for perturbation analysis.")
     parser.add_argument("--magnitude", type=float, default=0.1,
                         help="Maximum noise magnitude for generating perturbed images.")
