@@ -71,7 +71,7 @@ def blur_perturbation_linspace(image, magnitude, n, epsilon=1e-3, **kwargs):
         Tensor: Image of shape (n, C, H, W)
     """
     kernel_size = int(int(magnitude * 50 * 2) + 1)
-    sigma_values = torch.linspace(epsilon, magnitude * max(image.shape), n, device=image.device)
+    sigma_values = torch.linspace(epsilon, magnitude * max(image.shape)/2, n, device=image.device)
 
     out = []
     for sigma in sigma_values:
