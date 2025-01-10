@@ -6,7 +6,6 @@ perturb them with noise, occlusions, and other methods,
 and then generate explanations for the classification.
 """
 import os
-
 import numpy as np
 import matplotlib.pyplot as plt
 import torch
@@ -35,7 +34,7 @@ MODEL_NAMES = ("alexnet",
 
 
 def plot_model_classification(model, images, labels, magnitude=0.01,
-                              n_classes=4, do_yticks=True):
+                              n_classes=4, do_yticks=True, legend_size=6):
     """Plot the classification probabilities of the model for a range of noise magnitudes."""
     model.eval()
 
@@ -55,7 +54,11 @@ def plot_model_classification(model, images, labels, magnitude=0.01,
     if not do_yticks:
         plt.yticks([])
         plt.ylabel('')
-    plt.legend()
+    if legend_size is None:
+        plt.legend()
+    else:
+        plt.legend(prop={'size': legend_size})
+
 
 
 def main(label_path=LABELS_PATH,
@@ -88,13 +91,15 @@ def main(label_path=LABELS_PATH,
         if plot_name in figures_list:
             continue
 
-        fig, ax = plt.subplots(nrows=3, ncols=len(PERTURBATIONS))
-        suptitle = f'Model: {model_name}\nImage: {filename}'
+        fig, ax = plt.subplots(nrows=3, ncols=len(PERTURBATIONS), figsize=(10, 6))
+        fig.subplots_adjust(left=0.03, right=0.97, bottom=0.1, top=0.88)
+
+        suptitle = f'Model: {model_name}  |  Image: {filename}'
         print(f'\n\n{suptitle}')
         plt.suptitle(suptitle)
 
         for i_pert, perturbation in enumerate(PERTURBATIONS):
-            print(perturbation)
+            print(perturbation.__name__)
 
             # imshow perturbed image
             plt.sca(ax[0, i_pert])
@@ -153,7 +158,7 @@ def main(label_path=LABELS_PATH,
         # plt.show(block=True)
 
         # Save the figure in full screen mode
-        fig.savefig(plot_name, dpi=100)
+        fig.savefig(plot_name, dpi=1000)
 
         figures_list.append(plot_name)
         plt.close()
