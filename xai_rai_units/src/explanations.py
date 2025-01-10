@@ -25,7 +25,7 @@ from xai_rai_units.src.utils import (
     imagenet_class_prediction
 )
 
-# Constants for methods
+# Constants for supported Grad-CAM and Captum methods
 GRADCAM_METHODS = {
     "GradCAM": GradCAM,
     "GradCAM++": GradCAMPlusPlus,
@@ -46,28 +46,33 @@ SUPPORTED_LIBRARIES = {"gradcam", "captum"}
 
 class ExplanationGenerator:
     """
-    Interface to generate explanations for image classification models using Grad-CAM or Captum library methods.
-    The class is tailed to work with models trained on the ImageNet dataset and generate explanations for a Tensor
-    of perturbed images of a specific class label.
-    The Grad-CAM methods can work with both convolutional and transformer-based architectures.
-    The Captum methods are limited to convolutional architectures.
+    Generates visual explanations for image classification models using Grad-CAM or Captum-based methods.
+
+    This class is designed to work with models trained on the ImageNet dataset and supports generating 
+    explanations for a batch of perturbed images. The Grad-CAM methods can handle both convolutional 
+    and transformer-based architectures, while Captum methods are limited to convolutional models.
     """
+
     def __init__(self, model: nn.Module, library: str, method: str):
         """
-        Initialize the explanation generator.
+        Initialize the ExplanationGenerator instance.
 
-        :param model: A PyTorch model for which explanations will be generated. If the library is 'captum', only
-                        convolutional models are supported. If the library is 'gradcam', both convolutional and
-                        transformer-based models are supported.
-        :param library: The library to use for explanations ('gradcam' or 'captum').
-        :param method: The specific explanation method to use (e.g., 'GradCAM', 'LayerGradCam').
+        :param model: A PyTorch model for which explanations will be generated.
+                      - 'captum' library supports only convolutional models.
+                      - 'gradcam' library supports both convolutional and transformer-based models.
+        :param library: The library to use for explanations. Supported values:
+                        - 'gradcam': Grad-CAM library.
+                        - 'captum': Captum library.
+        :param method: The specific explanation method to use.
+                       Examples: 'GradCAM', 'LayerGradCam', 'DeepLift'.
+        :raises ValueError: If the specified library is not supported.
         """
         self.model = model
         self.library = library.lower()
         self.method = method
 
         if self.library not in SUPPORTED_LIBRARIES:
-            raise ValueError(f"Unsupported library '{self.library}'. Choose from {SUPPORTED_LIBRARIES}.")
+            raise ValueError(f"Unsupported library '{self.library}'. Supported libraries: {SUPPORTED_LIBRARIES}.")
 
     def generate_explanations(
         self,
@@ -89,10 +94,10 @@ class ExplanationGenerator:
         :param resnet50_likely_class: bool, Whether to use ResNet50's most likely class prediction if the class label is not provided or invalid.
 
         :return: Tuple containing:
-            - Explanation heatmaps (torch.Tensor)
-            - Predicted labels (List[str])
-            - Array with the fraction of noise causing label changes (np.ndarray)
-            - Attributions (torch.Tensor or None)
+            - Explanation heatmaps (torch.Tensor) (N, C, H, W)
+            - Predicted labels (List[str]) of length N
+            - Fraction of noise causing label changes (np.ndarray of lenght N): Proportion of perturbations causing label changes.
+            - Attributions (torch.Tensor (N, C, H, W) or None)
         """
         # Determine the class label index
         class_idx = None
@@ -102,7 +107,7 @@ class ExplanationGenerator:
                 class_idx = preprocess_class_label(class_label_filename_imagenet)
             except Exception as e:
                 resnet50_likely_class = True
-                print(f"\n❌ Error processing class label '{class_label_filename_imagenet}': {str(e)}")
+                print(f"\n❌ Error processing class label {class_label_filename_imagenet}")
         
         if resnet50_likely_class:
             predicted_label = imagenet_class_prediction(model_name="resnet50", images=perturbed_images[0].unsqueeze(0))
@@ -113,7 +118,6 @@ class ExplanationGenerator:
 
             print(f"\n🔄 Using ResNet50's predicted likely class: '{class_label_filename_imagenet}' from ImageNet.")
 
-        # Debug message for explanation generation
         print(
             f"\n🚧 Generating explanations using the {self.method} method"
             f" from the {self.library} library"

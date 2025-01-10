@@ -13,3 +13,7 @@
 ### 📅 Estimated Completion:
 
 I aim to have this project finished by **December 8th, 2024** at the latest.
+
+
+### 📚 Project Description:
+
