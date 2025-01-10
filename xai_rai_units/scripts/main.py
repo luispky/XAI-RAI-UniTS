@@ -7,18 +7,17 @@ and then generate explanations for the classification.
 """
 import numpy as np
 import matplotlib.pyplot as plt
+import torch
 from xai_rai_units.src.paths import IMAGE_DIR, LABELS_PATH
-from xai_rai_units.src.alexnet import load_labels
-from xai_rai_units.src import perturbations as pert
+from xai_rai_units.src.alexnet import load_labels, load_images
 from xai_rai_units.src.explanations import ExplanationGenerator
-from xai_rai_units.src.utils import (
-    setup_model_and_layers,
-    load_local_images, 
-    sample_filenames
-)
+from xai_rai_units.src import perturbations as pert
+from xai_rai_units.src import utils
+from xai_rai_units.src.utils import setup_model_and_layers, load_local_images, sample_filenames
 
 
-PERTURBATIONS = (pert.gaussian_perturbation_linspace,
+PERTURBATIONS = (pert.identity_perturbation_linspace,
+                 pert.gaussian_perturbation_linspace,
                  pert.blur_perturbation_linspace,
                  pert.occlusion_perturbation_linspace,
                  pert.void_perturbation_linspace,
@@ -27,11 +26,38 @@ PERTURBATIONS = (pert.gaussian_perturbation_linspace,
 MODEL_NAMES = ("alexnet", "resnet50", "swin_transformer", "vit")
 
 
+def plot_model_classification(model,
+                              images,
+                              labels,
+                              magnitude=0.01,
+                              n_classes=4,
+                              n=30,
+                              ):
+    """Plot the classification probabilities of the model for a range of noise magnitudes."""
+    model.eval()
+
+    out = model(images[0].unsqueeze(0))
+    indices = np.argsort(out.detach().numpy().flatten())[-n_classes:]
+    epsilon_ = np.linspace(0, 1, n) ** 2 * magnitude
+    out = model(images)
+    out = torch.softmax(out, dim=1)
+    out = out.clone().detach().numpy()
+    proba = out[:, list(reversed(indices[:n_classes]))]
+
+    plt.title(f'Proba of top {n_classes} classes')
+    plt.plot(epsilon_/magnitude, proba, label=[labels[i] for i in list(reversed(indices))])
+    plt.xlabel(f'magnitude x {magnitude:.2f}')
+    plt.ylabel('proba')
+    plt.ylim(0, 1.05)
+    plt.legend()
+    plt.show()
+
+
 def main(image_dir=IMAGE_DIR,
          label_path=LABELS_PATH,
          n_images=3,
          library="gradcam", method="GradCAM",
-         magnitude=0.02,
+         magnitude=.2,
          n_cols=3,
          ):
     np.random.seed(0)
@@ -51,27 +77,36 @@ def main(image_dir=IMAGE_DIR,
 
         for filename, image in zip(filenames, images):
 
-            for perturbation in PERTURBATIONS:
+            fig, ax = plt.subplots(nrows=3, ncols=len(PERTURBATIONS))
+            plt.suptitle(f'{model_name} | {filename}')
 
-                noisy_images = perturbation(image, magnitude, n_images)
+            for i, perturbation in enumerate(PERTURBATIONS):
 
-                # Generate explanations and optionally retrieve predicted labels
-                explanations, pred_labels, noise_fraction_changes, _ = generator.generate_explanations(
-                    noisy_images,
-                    filename,
-                    target_layers,
-                    reshape_transform
-                )
-                # explanation / data to show
+                # imshow perturbed image
+                plt.sca(ax[0, i])
+                name = perturbation.__name__
+                name = name.replace('_perturbation', '')
+                name = name.replace('_linspace', '')
+                name = name.replace('_', '\n')
+                plt.title(f'{name}')
+                perturbed_images = perturbation(image, magnitude=magnitude, n=n_images, model=model)
+                plt.imshow(perturbed_images[-1].permute(1, 2, 0).numpy())
+                plt.axis('off')
 
-                fig, ax = plt.subplots(nrows=1, ncols=2)
+                # imshow noisy explanation
+                plt.sca(ax[1, i])
+                plt.title(f'Explanation')
+                heatmap = ...
+                noisy_explanation = ...
+                plt.imshow(noisy_explanation.permute(1, 2, 0).numpy())
+                plt.axis('off')
 
-                plt.suptitle(f'{model_name}\n{perturbation.__name__}')
+                # plot top class proba
+                plt.sca(ax[2, i])
+                plt.title(f'Classification')
+                # plot_model_classification(model, perturbed_images, labels, magnitude=magnitude)
 
-                plt.sca(ax[0])
-                plt.imshow(image.permute(1, 2, 0))
-
-                plt.show()
+            plt.show()
 
 
 if __name__ == '__main__':

@@ -5,7 +5,7 @@ from xai_rai_units.src import perturbations as pert
 from xai_rai_units.src import alexnet
 from xai_rai_units.src.paths import IMAGE_DIR, MODELS_DIR, LABELS_PATH
 from xai_rai_units.src.alexnet import load_images, load_labels
-# from xai_rai_units.src import utils
+from xai_rai_units.src import utils
 
 
 def test_noisy_image_linspace(image_dir=IMAGE_DIR, magnitude=.5, n=5):
@@ -112,10 +112,11 @@ def test_inverse_gradient_2(image_dir=IMAGE_DIR,
                             ):
     """Test the inverse gradient perturbation."""
     np.random.seed(42)
-    image = load_images(str(image_dir), n=None)[9]
+    image = load_images(str(image_dir), n=None)[15]
     labels = load_labels(str(label_path))
-    model = alexnet.download_alexnet(model_path)
-    # model = utils.load_model('resnet50')
+
+    # model = alexnet.download_alexnet(model_path)
+    model = utils.load_model('resnet50')
     # model = utils.load_model('swin_transformer')
     # model = utils.load_model('vit')
     # model = utils.load_model('alexnet')
@@ -310,7 +311,7 @@ if __name__ == '__main__':
     # test_blur_image_linspace()
     # test_occlusion_linspace()
     # test_the_void_linspace()
-    test_inverse_gradient()
-    # test_inverse_gradient_2()
+    # test_inverse_gradient()
+    test_inverse_gradient_2()
     # test_texture_perturbation()
     # test_undo_gradient_perturbation()

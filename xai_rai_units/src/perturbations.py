@@ -20,7 +20,22 @@ def image_linspace(image, noise, n=100):
     return segment
 
 
-def gaussian_perturbation_linspace(image, magnitude, n, model=None, seed=None):
+def identity_perturbation_linspace(image, n, **kwargs):
+    """
+    Creates a linspace of copies of image .
+
+    Args:
+        image (Tensor): A tensor of shape (n, C, H, W)
+        n (int): Number of samples to take
+
+    Returns:
+        Tensor: Image of shape (n, C, H, W)
+    """
+    noise = torch.zeros_like(image)
+    return image_linspace(image, noise, n)
+
+
+def gaussian_perturbation_linspace(image, magnitude, n, seed=None, **kwargs):
     """
     Creates a linspace of images between image and image + noise
 
@@ -28,7 +43,6 @@ def gaussian_perturbation_linspace(image, magnitude, n, model=None, seed=None):
         image (Tensor): A tensor of shape (n, C, H, W)
         magnitude (float): Maximum perturbation magnitude
         n (int): Number of samples to take
-        model (nn.Module): A PyTorch model
         seed (int or None): Random seed
 
     Returns:
@@ -43,22 +57,21 @@ def gaussian_perturbation_linspace(image, magnitude, n, model=None, seed=None):
     return image_linspace(image, noise, n)
 
 
-def blur_perturbation_linspace(image, magnitude, n, model=None, epsilon=1e-3):
+def blur_perturbation_linspace(image, magnitude, n, epsilon=1e-3, **kwargs):
     """
     Creates a linspace of increasingly blurred images
 
     Args:
         image (Tensor): A tensor of shape (n, C, H, W)
-        magnitude (float): Maximum blur magnitude (number of pixels)
+        magnitude (float):
         n (int): Number of samples to take
-        model (nn.Module): A PyTorch model
         epsilon (float): Minimum standard deviation (must be positive)
 
     Returns:
         Tensor: Image of shape (n, C, H, W)
     """
-    kernel_size = int(2 * int(magnitude) + 1)
-    sigma_values = torch.linspace(epsilon, magnitude, n, device=image.device)
+    kernel_size = int(int(magnitude * 50 * 2) + 1)
+    sigma_values = torch.linspace(epsilon, magnitude * max(image.shape), n, device=image.device)
 
     out = []
     for sigma in sigma_values:
@@ -68,15 +81,14 @@ def blur_perturbation_linspace(image, magnitude, n, model=None, epsilon=1e-3):
     return torch.stack(out)
 
 
-def occlusion_perturbation_linspace(image, magnitude, n, model=None, fill_value=0):
+def occlusion_perturbation_linspace(image, magnitude, n, fill_value=0, **kwargs):
     """
     Creates a linspace of increasingly occluded images
 
     Args:
         image (Tensor): A tensor of shape (n, C, H, W)
-        magnitude (float): Maximum size of the occlusion (number of pixels)
+        magnitude (float):
         n (int): Number of samples to take
-        model (nn.Module): A PyTorch model
         fill_value (int): Value to fill the occlusion with
 
     Return:
@@ -84,11 +96,12 @@ def occlusion_perturbation_linspace(image, magnitude, n, model=None, fill_value=
     """
 
     # choose a random occlusion region
+    sigma = magnitude * max(image.shape) * 3
     _, H, W = image.shape
-    x1 = torch.linspace(W, W - magnitude, n, device=image.device).int() // 2
-    y1 = torch.linspace(H, H - magnitude, n, device=image.device).int() // 2
-    x2 = torch.linspace(W, W + magnitude, n, device=image.device).int() // 2
-    y2 = torch.linspace(H, H + magnitude, n, device=image.device).int() // 2
+    x1 = torch.linspace(W, W - sigma, n, device=image.device).int() // 2
+    y1 = torch.linspace(H, H - sigma, n, device=image.device).int() // 2
+    x2 = torch.linspace(W, W + sigma, n, device=image.device).int() // 2
+    y2 = torch.linspace(H, H + sigma, n, device=image.device).int() // 2
     out = []
     for i in range(n):
         occluded = image.clone()
@@ -118,20 +131,20 @@ def gaussian_kernel(kernel_size, sigma):
     return kernel
 
 
-def void_perturbation_linspace(image, magnitude, n, model=None, fill_value=0):
+def void_perturbation_linspace(image, magnitude, n, fill_value=0, **kw):
     """
     Creates a linspace of increasingly voided images
 
     Args:
         image (Tensor): A tensor of shape (n, C, H, W)
-        magnitude (float): Maximum size of the void (number of pixels)
+        magnitude (float):
         n (int): Number of samples to take
-        model (nn.Module): A PyTorch model
         fill_value (int): Value to fill the void with
 
     Returns:
         Tensor: Image of shape (n, C, H, W)
     """
+    sigma = magnitude * max(image.shape) / 4
     _, H, W = image.shape
     x = torch.linspace(-1, 1, W, device=image.device)
     y = torch.linspace(-1, 1, H, device=image.device)
@@ -139,7 +152,7 @@ def void_perturbation_linspace(image, magnitude, n, model=None, fill_value=0):
 
     out = []
     for i in range(n):
-        k = magnitude * (i / n)**2
+        k = sigma * (i / n)**2
         mask = torch.exp(-(x ** 2 + y ** 2) * k)
         out.append(image * mask + fill_value * (1 - mask))
 
