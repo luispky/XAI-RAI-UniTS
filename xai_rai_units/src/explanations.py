@@ -112,7 +112,7 @@ class ExplanationGenerator:
         if resnet50_likely_class:
             predicted_label = imagenet_class_prediction(model_name="resnet50", images=perturbed_images[0].unsqueeze(0))
             if not predicted_label:
-                raise ValueError("Unable to determine the class label using ResNet50.")
+                raise ValueError("❌ Unable to determine the class label using ResNet50.")
             class_label_filename_imagenet = predicted_label[0]  # Assuming prediction returns a list of labels
             class_idx = preprocess_class_label(class_label_filename_imagenet)
 
@@ -158,12 +158,12 @@ class ExplanationGenerator:
         Generate explanations using Grad-CAM.
         """
         if self.method not in GRADCAM_METHODS:
-            raise ValueError(f"Invalid Grad-CAM method '{self.method}'. Choose from {list(GRADCAM_METHODS.keys())}")
+            raise ValueError(f"❌ Invalid Grad-CAM method '{self.method}'. Choose from {list(GRADCAM_METHODS.keys())}")
 
         explainer = GRADCAM_METHODS[self.method]
 
         if not target_layers:
-            raise ValueError("`target_layers` must be provided for Grad-CAM methods.")
+            raise ValueError("⚠️`target_layers` must be provided for Grad-CAM methods.")
 
         with explainer(model=self.model, target_layers=target_layers, reshape_transform=reshape_transform) as cam:
             attributions = cam(input_tensor=perturbed_images,
@@ -186,7 +186,7 @@ class ExplanationGenerator:
         Generate explanations using Captum.
         """
         if self.method not in CAPTUM_METHODS:
-            raise ValueError(f"Invalid Captum method '{self.method}'. Choose from {list(CAPTUM_METHODS.keys())}")
+            raise ValueError(f"❌ Invalid Captum method '{self.method}'. Choose from {list(CAPTUM_METHODS.keys())}")
 
         explanation_method = CAPTUM_METHODS[self.method]
         explainer = (

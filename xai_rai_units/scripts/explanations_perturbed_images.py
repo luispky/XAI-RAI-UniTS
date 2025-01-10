@@ -59,7 +59,7 @@ def main(args):
             )
         
         except Exception as e:
-            print(f"\n ❌ {e}")
+            print(f"\n {e}")
             continue
 
 if __name__ == "__main__":
