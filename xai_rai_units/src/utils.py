@@ -1,9 +1,11 @@
 import os
+import json
 import numpy as np
 import matplotlib.pyplot as plt
 import random
 import tarfile
 import requests
+import re
 import timm
 import torch
 import torch.nn as nn
@@ -22,29 +24,85 @@ from pytorch_grad_cam.utils.image import show_cam_on_image
 # URL for the ImageNet class-to-index mapping JSON file
 IMAGENET_CLASS_URL = "https://storage.googleapis.com/download.tensorflow.org/data/imagenet_class_index.json"
 
-
-def get_imagenet_idx_to_class(url=IMAGENET_CLASS_URL) -> Dict[int, str]:
+def download_imagenet_mapping(data_dir: str = DATASETS_DIR, url: str = IMAGENET_CLASS_URL) -> str:
     """
-    # TODO comment input-output
+    Downloads the ImageNet class-to-index mapping JSON file if not already present.
+
+    Args:
+        data_dir (str): Directory to store the mapping file.
+        url (str): URL of the ImageNet class-to-index JSON file.
+
+    Returns:
+        str: File path to the JSON file in the data directory.
     """
-    # Send a GET request to download the file
-    response = requests.get(url)
+    # Ensure the data directory exists
+    os.makedirs(data_dir, exist_ok=True)
 
-    # Check for successful request
-    response.raise_for_status()
+    # Define the file path for the mapping
+    data_file = os.path.join(data_dir, "imagenet_class_index.json")
 
-    # Parse the JSON content
-    class_idx = response.json()
+    # Check if the file already exists
+    if not os.path.exists(data_file):
+        # Download the mapping and save it to the data directory
+        response = requests.get(url)
+        response.raise_for_status()
 
-    # Invert the mapping to get index-to-class
+        # Save the JSON content to the file
+        with open(data_file, "w") as f:
+            json.dump(response.json(), f)
+        print(f"Downloaded and saved ImageNet class mapping to {data_file}")
+
+    return data_file
+
+
+def get_imagenet_class_to_idx(data_dir: str = DATASETS_DIR, url: str = IMAGENET_CLASS_URL) -> Dict[str, int]:
+    """
+    Loads the class-to-index mapping from the ImageNet mapping JSON file.
+
+    Args:
+        data_dir (str): Directory where the mapping file is stored.
+        url (str): URL of the ImageNet class-to-index JSON file.
+
+    Returns:
+        Dict[str, int]: Mapping of ImageNet class names to indices.
+    """
+    # Download and/or locate the file
+    data_file = download_imagenet_mapping(data_dir, url)
+
+    # Load the mapping from the file
+    with open(data_file, "r") as f:
+        class_idx = json.load(f)
+
+    # Extract class-to-index mapping
+    class_to_idx = {v[1].lower(): int(k) for k, v in class_idx.items()}
+    return class_to_idx
+
+
+def get_imagenet_idx_to_class(data_dir: str = DATASETS_DIR, url: str = IMAGENET_CLASS_URL) -> Dict[int, str]:
+    """
+    Loads the index-to-class mapping from the ImageNet mapping JSON file.
+
+    Args:
+        data_dir (str): Directory where the mapping file is stored.
+        url (str): URL of the ImageNet class-to-index JSON file.
+
+    Returns:
+        Dict[int, str]: Mapping of ImageNet indices to class names.
+    """
+    # Download and/or locate the file
+    data_file = download_imagenet_mapping(data_dir, url)
+
+    # Load the mapping from the file
+    with open(data_file, "r") as f:
+        class_idx = json.load(f)
+
+    # Extract index-to-class mapping
     idx_to_class = {int(k): v[1].lower() for k, v in class_idx.items()}
-
     return idx_to_class
 
-
-# Class-to-Index and Index-to-Class mappings for ImageNet
+# Get the mappings
+CLASS_TO_IDX_IMAGENET = get_imagenet_class_to_idx()
 IDX_TO_CLASS_IMAGENET = get_imagenet_idx_to_class()
-CLASS_TO_IDX_IMAGENET = {v: k for k, v in IDX_TO_CLASS_IMAGENET.items()}
 
 
 def get_class_to_idx_imagenette() -> Dict[str, int]:
@@ -386,23 +444,6 @@ def compute_classes_proportion_dataloder(loader):
     return unique, np.round(counts / len(labels), 2)
 
 
-def load_model(model_name):
-    """
-    # TODO comment input-output
-    """
-    if model_name == "alexnet":
-        # return download_alexnet(f"{str(MODELS_DIR)}/alexnet_weights.pth")
-        return alexnet(weights=AlexNet_Weights.IMAGENET1K_V1)
-    elif model_name == "resnet50":
-        return resnet50(weights=ResNet50_Weights.IMAGENET1K_V1)
-    elif model_name == "swin_transformer":
-        return timm.create_model("swin_base_patch4_window7_224", pretrained=True)
-    elif model_name == "vit":
-        return timm.create_model('vit_tiny_patch16_224', pretrained=True)
-    else:
-        raise ValueError(f"Model {model_name} is not supported.")
-
-
 def download_and_save_model_weights(model_name, model, weights_path):
     """
     Downloads and saves the model weights to the specified path in SafeTensors format.
@@ -490,8 +531,17 @@ def reshape_transform_vit(tensor, height=14, width=14):
 
 
 def preprocess_class_label(class_label: str) -> int:
-    """Preprocesses and validates the ImageNet class label."""
-    class_label = class_label.lower().split(".")[0]
+    """Preprocesses and validates the ImageNet class label.
+    
+    :param class_label: The ImageNet class label to preprocess when loaded from a filename.
+    """
+    # Convert to lowercase
+    class_label = class_label.lower()
+    # Remove file extension
+    class_label = class_label.split(".")[0]
+    # Remove trailing underscores with numbers
+    class_label = re.sub(r'_\d+$', '', class_label)
+    
     if class_label not in CLASS_TO_IDX_IMAGENET:
         raise ValueError(f"Invalid class label '{class_label}'. Please provide a valid ImageNet class label.")
     return CLASS_TO_IDX_IMAGENET[class_label]
@@ -547,3 +597,29 @@ def setup_model_and_layers(model_name: str) -> Tuple[nn.Module, List[nn.Module],
         raise ValueError(f"Unsupported model: {model_name}")
 
     return model, target_layers, reshape_transform
+
+
+def sample_filenames(directory: str = IMAGE_DIR, n: int = 5) -> List[str]:
+    """
+    Randomly samples n filenames (without extensions) from the specified directory.
+
+    Args:
+        directory (str): Path to the directory containing images.
+        n (int): Number of filenames to sample.
+
+    Returns:
+        List[str]: A list of randomly sampled filenames without extensions.
+    """
+    # List all files in the directory
+    all_files = os.listdir(directory)
+
+    # Filter out directories (only keep files)
+    all_files = [f for f in all_files if os.path.isfile(os.path.join(directory, f))]
+
+    # Randomly sample n files
+    sampled_files = random.sample(all_files, n)
+
+    # Remove extensions from filenames
+    sampled_filenames = [os.path.splitext(f)[0] for f in sampled_files]
+
+    return sampled_filenames
