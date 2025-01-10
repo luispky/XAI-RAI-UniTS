@@ -8,10 +8,14 @@ and then generate explanations for the classification.
 import numpy as np
 import matplotlib.pyplot as plt
 from xai_rai_units.src.paths import IMAGE_DIR, LABELS_PATH
-from xai_rai_units.src.alexnet import load_images, load_labels
+from xai_rai_units.src.alexnet import load_labels
 from xai_rai_units.src import perturbations as pert
 from xai_rai_units.src.explanations import ExplanationGenerator
-from xai_rai_units.src.utils import setup_model_and_layers
+from xai_rai_units.src.utils import (
+    setup_model_and_layers,
+    load_local_images, 
+    sample_filenames
+)
 
 
 PERTURBATIONS = (pert.gaussian_perturbation_linspace,
@@ -34,8 +38,8 @@ def main(image_dir=IMAGE_DIR,
     labels = load_labels(str(label_path))
     print(labels)
 
-    filenames = ...
-    images = ...
+    filenames = sample_filenames(n=5)
+    images = load_local_images(filenames)
 
     for model_name in MODEL_NAMES:
 
