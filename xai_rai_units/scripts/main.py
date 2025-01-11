@@ -57,7 +57,8 @@ def plot_model_classification(model, images, labels, magnitude=0.01,
 
 def main(label_path=LABELS_PATH,
          n_images=30,
-         library="gradcam", method="GradCAM",
+         library="gradcam",
+         method="GradCAM",
          magnitude=.1,
          ):
     labels = load_labels(str(label_path))

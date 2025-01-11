@@ -66,7 +66,7 @@ This project was developed by the following students:
 
 ### Project Description
 
-🔍 This project investigates the robustness of popular computer vision models—AlexNet, ResNet50, Vision Transformer (ViT), and Swin Transformer—against adversarial attacks and perturbations. It also evaluates the reliability of the explanations these models generate under such conditions.
+🔍 This project investigates the robustness of popular computer vision models trained on the ImageNet dataset—AlexNet, ResNet50, Vision Transformer (ViT), and Swin Transformer—against adversarial attacks and perturbations. It also inspects the reliability of the explanations these models generate under such conditions.
 
 ### Project Structure
 
@@ -99,7 +99,7 @@ This project was developed by the following students:
 
 ### Slides
 
-📑 View the project presentation slides [here](https://www.google.com).
+📑 View the project presentation slides [here](https://docs.google.com/presentation/d/1MeYbksuf-NYsq2r8V-fL1dgzV7CjD_gLuu2tUy_T4Pw/edit?usp=sharing).
 
 ### Built With
 
@@ -204,11 +204,14 @@ This script evaluates the robustness of models to adversarial attacks and pertur
 
 #### Perturbation Techniques
 
+- **Identity Perturbation**: 🪞 Produces identical images without any modifications as a baseline for comparison.
 - **Gaussian Noise**: 📈 Adds random noise to the image.
 - **Image Blurring**: 📷 Gradually reduces image sharpness.
 - **Occlusion**: 🌓 Adds black rectangles to obscure parts of the image.
 - **Void Perturbation**: 🌫️ Gradually darkens edges towards the center.
 - **Opposite Gradient**: 🔀 Alters the image using gradients of the opposite direction.
+
+These techniques add noise to the image (in <font color='red'>pixel space $[0, 1]$</font>)  in a fixed random direction producing a sequence of perturbed images until the desired noise magnitude.
 
 #### Example Usage
 
