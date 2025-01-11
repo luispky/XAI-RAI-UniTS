@@ -27,28 +27,29 @@ PERTURBATIONS = (pert.identity_perturbation_linspace,
                  )
 
 MODEL_NAMES = ("alexnet",
-               # "resnet50",
+               "resnet50",
                # "swin_transformer",
                # "vit",
                )
 
 
 def plot_model_classification(model, images, labels, magnitude=0.01,
-                              n_classes=4, do_yticks=True, legend_size=6):
+                              n_classes=4, xlabel='', do_yticks=True,
+                              legend_size=5):
     """Plot the classification probabilities of the model for a range of noise magnitudes."""
     model.eval()
 
     out = model(images[0].unsqueeze(0))
-    indices = np.argsort(out.detach().numpy().flatten())[-n_classes:]
+    indices = np.argsort(-out.detach().numpy().flatten())[:n_classes]
     epsilon_ = np.linspace(0, 1, len(images)) ** 2 * magnitude
     out = model(images)
     out = torch.softmax(out, dim=1)
     out = out.clone().detach().numpy()
-    proba = out[:, list(reversed(indices[:n_classes]))]
+    proba = out[:, indices]
 
     # plt.title(f'Proba of top {n_classes} classes')
     plt.plot(epsilon_/magnitude, proba, label=[labels[i] for i in list(reversed(indices))])
-    plt.xlabel(f'magnitude x {magnitude:.2f}')
+    plt.xlabel(xlabel)
     plt.ylabel('proba')
     plt.ylim(0, 1.05)
     if not do_yticks:
@@ -67,15 +68,12 @@ def main(label_path=LABELS_PATH,
          magnitude=.1,
          ):
     labels = load_labels(str(label_path))
-    print(labels)
-
     filenames = sample_filenames(n=5)
     images = load_local_images(filenames)
-
     figures_list = os.listdir(f'{FIGURES_DIR}\\plots')
 
     while True:
-        model_name = np.random.choice(MODEL_NAMES, 1)[0]
+        model_name = str(np.random.choice(MODEL_NAMES, 1)[0])
 
         # Configure the model, target layers, and reshape transformation based on the model architecture
         model, target_layers, reshape_transform = setup_model_and_layers(model_name)
@@ -88,13 +86,16 @@ def main(label_path=LABELS_PATH,
         image = images[i_img]
 
         plot_name = f'{FIGURES_DIR}\\plots\\plot_{model_name}_{filename}.png'
-        if plot_name in figures_list:
+        print(f'\n>>> {plot_name}')
+        if plot_name.split('\\')[-1] in figures_list:
+            print('skipping...')
             continue
+        print('computing...')
 
         fig, ax = plt.subplots(nrows=3, ncols=len(PERTURBATIONS), figsize=(10, 6))
         fig.subplots_adjust(left=0.03, right=0.97, bottom=0.1, top=0.88)
 
-        suptitle = f'Model: {model_name}  |  Image: {filename}'
+        suptitle = f'Model: {model_name}  |  Image: {filename}   | magnitude={magnitude:.2f}'
         print(f'\n\n{suptitle}')
         plt.suptitle(suptitle)
 
@@ -143,8 +144,10 @@ def main(label_path=LABELS_PATH,
                 plt.yticks([])
             else:
                 # plt.title(f'Classification')
+                xlabel = 'magnitude%' if i_pert == 1 else ''
+                do_yticks = i_pert == 1
                 plot_model_classification(model, perturbed_images, labels,
-                                          magnitude=magnitude, do_yticks=i_pert==1)
+                                          magnitude=magnitude, do_yticks=do_yticks, xlabel=xlabel)
 
         fig.subplots_adjust(hspace=0.06, wspace=0.06)
 
@@ -153,9 +156,6 @@ def main(label_path=LABELS_PATH,
 
         # Toggle full screen mode
         manager.full_screen_toggle()
-
-        # show
-        # plt.show(block=True)
 
         # Save the figure in full screen mode
         fig.savefig(plot_name, dpi=1000)
