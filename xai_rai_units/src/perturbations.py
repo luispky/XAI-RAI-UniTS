@@ -1,6 +1,7 @@
 import torch
 from torchvision.transforms import GaussianBlur
 from torchvision import transforms
+import numpy as np
 
 
 def image_linspace(image, noise, n=100):
@@ -196,7 +197,7 @@ def inv_grad_perturbation(image, model, i_class):
     return grad
 
 
-def inv_grad_perturbation_linspace(image, magnitude, n, model, i_class=0):
+def inv_grad_perturbation_linspace(image, magnitude, n, model):
     """
     Creates a linspace of images between image and image + noise
 
@@ -205,12 +206,14 @@ def inv_grad_perturbation_linspace(image, magnitude, n, model, i_class=0):
         magnitude (float): Maximum perturbation magnitude
         n (int): Number of samples to take
         model (nn.Module): A PyTorch model
-        i_class (int): Index of the class to compute the gradient w.r.t the input
 
     Returns:
         Tensor: Image of shape (n, C, H, W)
     """
-    grad = inv_grad_perturbation(image, model, i_class)
+    out = model(image.unsqueeze(dim=0))
+    indices = np.argsort(out.detach().numpy().flatten())  # bad to good
+    i_second_class = int(indices[-2])
+    grad = inv_grad_perturbation(image, model, i_second_class)
     noise = grad * magnitude
     return image_linspace(image, noise, n)
 
