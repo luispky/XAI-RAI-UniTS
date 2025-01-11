@@ -1,4 +1,4 @@
-name: xai
+name: xai-env
 channels:
   - defaults
   - conda-forge

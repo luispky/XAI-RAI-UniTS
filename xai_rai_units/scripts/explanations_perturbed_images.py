@@ -17,8 +17,7 @@ def main(args):
     set_seed(args.seed)
     
     # Sample image filenames
-    # filenames = sample_filenames(n=args.sample_images)
-    filenames = ['llama']
+    filenames = sample_filenames(n=args.sample_images)
     
     # Load and preprocess the images
     images = load_local_images(filenames)
