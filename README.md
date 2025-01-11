@@ -12,7 +12,7 @@
 #### 📚 University of Trieste, Academic Year 2024–2025  
 #### 🎓 Data Science and Artificial Intelligence Master's Program  
 
-[![Logo](figures/gradcam_llama_alexnet.png)](https://github.com/luispky/XAI-RAI-UniTS)
+[![Logo](figures/gradcam_llama_resnet50-logo.png)](https://github.com/luispky/XAI-RAI-UniTS)
 
 </div>
 
@@ -154,11 +154,11 @@ This script generates visual explanations for images using Explainable AI (XAI) 
 |-----------------------|--------|----------|-----------------------------------------------------------------------------------------------|
 | `--library`           | `str`  | "gradcam" | Library for generating explanations (`gradcam` or `captum`).                                  |
 | `--method`            | `str`  | "GradCAM" | Explanation method (e.g., `GradCAM`, `LayerGradCam`).                                         |
-| `--model_name`        | `str`  | "alexnet" | Pre-trained model to use (`alexnet`, `resnet50`, etc.).                                       |
+| `--model_name`        | `str`  | "resnet50" | Pre-trained model to use (`alexnet`, `resnet50`, etc.).                                       |
 | `--sample_images`     | `int`  | 5         | Number of images to process.                                                                 |
 | `--n_perturbations`   | `int`  | 5         | Number of perturbed images to generate for analysis.                                          |
-| `--magnitude`         | `float`| 0.1       | Maximum noise magnitude for image perturbation.                                               |
-| `--seed`              | `int`  | 42        | Random seed for reproducibility.                                                             |
+| `--magnitude`         | `float`| 0.2       | Maximum noise magnitude for image perturbation.                                               |
+| `--seed`              | `int`  | 24        | Random seed for reproducibility.                                                             |
 
 #### Example Usage
 
@@ -169,8 +169,8 @@ python xai_rai_units/scripts/explanations_perturbed_images.py \
   --model_name resnet50 \
   --sample_images 5 \
   --n_perturbations 5 \
-  --magnitude 0.1 \
-  --seed 42
+  --magnitude 0.2 \
+  --seed 24
 ```
 
 ---

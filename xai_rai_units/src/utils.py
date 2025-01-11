@@ -395,8 +395,8 @@ def load_local_images(filename: Union[str, List[str]], img_size: int = 224) -> t
         transforms.Resize((img_size, img_size)),  # Resize to img_size x img_size
         transforms.ToTensor(),  # Convert image to tensor
         # transforms.Normalize(
-            # mean=[0.485, 0.456, 0.406],  # Normalize using ImageNet mean
-            # std=[0.229, 0.224, 0.225],  # Normalize using ImageNet std
+        #     mean=[0.485, 0.456, 0.406],  # Normalize using ImageNet mean
+        #     std=[0.229, 0.224, 0.225],  # Normalize using ImageNet std
         # ),
     ])
 
@@ -525,15 +525,14 @@ def preprocess_class_label(class_filename: str):
     return CLASS_TO_IDX_IMAGENET[class_filename]
 
 
-def imagenet_class_prediction(model_name: str, images: torch.Tensor) -> List[str]:
+def imagenet_class_prediction(images: torch.Tensor, model_name: str = 'resnet50') -> List[str]:
     """
     Predicts ImageNet class labels for a batch of images using a specified model.
     
-    :param model_name: str, The name of the model to use for prediction (e.g., "resnet50").
-        Currently, only "resnet50" is supported.
     :param images: torch.Tensor, A batch of preprocessed image tensors with shape (N, C, H, W) 
         or a single image tensor with shape (C, H, W). If a single image is provided, 
         it will automatically add a batch dimension.
+    :param model_name: str, The name of the model to use for prediction (e.g., "resnet50").
     :return: List[str], A list of predicted class labels for the input images.
     :raises ValueError: If the provided model name is not supported or if input tensor shape is invalid.
     """
@@ -544,9 +543,6 @@ def imagenet_class_prediction(model_name: str, images: torch.Tensor) -> List[str
         raise ValueError("Input `images` must be a 4D tensor (N, C, H, W) or a single image (C, H, W).")
     
     # Load the specified model
-    if model_name != "resnet50":
-        raise ValueError(f"Model '{model_name}' is not supported. Only 'resnet50' is currently supported.")
-    
     model = load_model(model_name)
     model.eval()
     

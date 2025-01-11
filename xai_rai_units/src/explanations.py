@@ -89,6 +89,8 @@ class ExplanationGenerator:
 
         :param perturbed_images: torch.Tensor, A batch of perturbed input images (N, C, H, W).
         :param class_label_filename_imagenet: Optional[str], The ImageNet class label for generating explanations.
+            The input is processed to determine the class index for the specified label. If the label is not provided
+            or invalid, the most likely class prediction from ResNet50 is used.
         :param target_layers: Optional[List[Union[nn.Module, nn.Sequential]]], Target layers for explanations.
         :param reshape_transform: Optional[Callable], Transformation for reshaping input images for Grad-CAM methods.
         :param resnet50_likely_class: bool, Whether to use ResNet50's most likely class prediction if the class label is not provided or invalid.
@@ -102,15 +104,15 @@ class ExplanationGenerator:
         # Determine the class label index
         class_idx = None
 
-        if not resnet50_likely_class:
-            try:
-                class_idx = preprocess_class_label(class_label_filename_imagenet)
-            except Exception as e:
-                resnet50_likely_class = True
-                print(f"\n❌ Error processing class label {class_label_filename_imagenet}")
+        try:
+            class_idx = preprocess_class_label(class_label_filename_imagenet)
+            resnet50_likely_class = False
+        except Exception as e:
+            resnet50_likely_class = True
+            print(f"\n❌ Error processing class label {class_label_filename_imagenet}")
         
         if resnet50_likely_class:
-            predicted_label = imagenet_class_prediction(model_name="resnet50", images=perturbed_images[0].unsqueeze(0))
+            predicted_label = imagenet_class_prediction(images=perturbed_images[0])
             if not predicted_label:
                 raise ValueError("❌ Unable to determine the class label using ResNet50.")
             class_label_filename_imagenet = predicted_label[0]  # Assuming prediction returns a list of labels
