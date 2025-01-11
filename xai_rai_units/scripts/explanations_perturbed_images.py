@@ -6,8 +6,9 @@ from xai_rai_units.src.utils import (
     set_seed,
     show_images,
     setup_model_and_layers,
-    sample_filenames
+    sample_filenames, 
 )
+
 
 def main(args):
     """
@@ -17,8 +18,7 @@ def main(args):
     set_seed(args.seed)
     
     # Sample image filenames
-    # filenames = sample_filenames(n=args.sample_images)
-    filenames = ['llama']
+    filenames = sample_filenames(n=args.sample_images)
     
     # Load and preprocess the images
     images = load_local_images(filenames)
@@ -40,7 +40,7 @@ def main(args):
                 class_label_filename_imagenet=filename,
                 target_layers=target_layers,
                 reshape_transform=reshape_transform,
-                resnet50_likely_class=False
+                resnet50_likely_class=True
             )
             
             # Print header with proper alignment
@@ -69,15 +69,15 @@ if __name__ == "__main__":
                         help="Library to use for generating explanations.")
     parser.add_argument("--method", type=str, default="GradCAM",
                         help="Explanation method to use (e.g., 'GradCAM', 'LayerGradCam').")
-    parser.add_argument("--model_name", type=str, default="alexnet",
+    parser.add_argument("--model_name", type=str, default="resnet50",
                         help="Name of the pre-trained model to use (e.g., 'alexnet', 'resnet50').")
     parser.add_argument("--sample_images", type=int, default=5,
                         help="Number of sample images to process.")
-    parser.add_argument("--n_perturbations", type=int, default=10,
+    parser.add_argument("--n_perturbations", type=int, default=5,
                         help="Number of noisy images to generate for perturbation analysis.")
-    parser.add_argument("--magnitude", type=float, default=0.1,
+    parser.add_argument("--magnitude", type=float, default=0.2,
                         help="Maximum noise magnitude for generating perturbed images.")
-    parser.add_argument("--seed", type=int, default=42,
+    parser.add_argument("--seed", type=int, default=24,
                         help="Random seed for reproducibility.")
     
     args = parser.parse_args()

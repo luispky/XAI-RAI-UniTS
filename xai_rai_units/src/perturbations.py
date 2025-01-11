@@ -24,7 +24,7 @@ def image_linspace(image, noise, n=100):
             std=[0.229, 0.224, 0.225],  # Normalize using ImageNet std
         ),
     ])
-    # segment = transforms_pipeline(segment)
+    segment = transforms_pipeline(segment)
     return segment
 
 
