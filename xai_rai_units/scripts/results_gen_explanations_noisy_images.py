@@ -44,7 +44,7 @@ def process_images(config):
             print(f"\nProcessing: Model={model_name}, Perturbation={perturbation_name}")
             for filename, image in zip(filenames, images):
                 # Generate the output filename
-                output_filename = f"{config['library']}_{config['method']}_{model_name}_{perturbation_name}_{filename.split('.')[0]}.png"
+                output_filename = f"{config['library']}_{config['method']}_{model_name}_{perturbation_name}_{filename}"
                 output_path = os.path.join(FIGURES_DIR, output_filename)
 
                 # Check if the file already exists

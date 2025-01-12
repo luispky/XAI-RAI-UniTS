@@ -71,7 +71,7 @@ def main(args):
                 print(f"{str(label):<20} | {noise:.2f}")
 
             # Visualize and save the generated explanations
-            output_filename = f"{args.library}_{args.method}_{filename.split('.')[0]}_{args.model_name}_{args.perturbation_name}"
+            output_filename = f"{args.library}_{args.method}_{filename}_{args.model_name}_{args.perturbation_name}"
             show_images(
                 explanations,
                 labels=pred_labels,

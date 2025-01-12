@@ -81,6 +81,7 @@ class ExplanationGenerator:
         target_layers: Optional[List[Union[nn.Module, nn.Sequential]]] = None,
         reshape_transform: Optional[Callable] = None,
         resnet50_likely_class: bool = True,
+        verbose: bool = True,
     ) -> Tuple[torch.Tensor, List[str], np.ndarray, Optional[torch.Tensor]]:
         """
         Generate explanations for a batch of perturbed images using the specified library and method.
@@ -109,7 +110,8 @@ class ExplanationGenerator:
             resnet50_likely_class = False
         except Exception as e:
             resnet50_likely_class = True
-            print(f"\n❌ Error processing class label {class_label_filename_imagenet}")
+            if verbose:
+                print(f"\n❌ Error processing class label {class_label_filename_imagenet}")
         
         if resnet50_likely_class:
             predicted_label = imagenet_class_prediction(images=perturbed_images[0])
@@ -117,15 +119,16 @@ class ExplanationGenerator:
                 raise ValueError("❌ Unable to determine the class label using ResNet50.")
             class_label_filename_imagenet = predicted_label[0]  # Assuming prediction returns a list of labels
             class_idx = preprocess_class_label(class_label_filename_imagenet)
+            if verbose:
+                print(f"\n🔄 Using ResNet50's predicted likely class: '{class_label_filename_imagenet}' from ImageNet.")
 
-            print(f"\n🔄 Using ResNet50's predicted likely class: '{class_label_filename_imagenet}' from ImageNet.")
-
-        print(
-            f"\n🚧 Generating explanations using the {self.method} method"
-            f" from the {self.library} library"
-            f" for the class '{class_label_filename_imagenet}' (class index: {class_idx})"
-            f" from the ImageNet dataset."
-        )
+        if verbose:
+            print(
+                f"\n🚧 Generating explanations using the {self.method} method"
+                f" from the {self.library} library"
+                f" for the class '{class_label_filename_imagenet}' (class index: {class_idx})"
+                f" from the ImageNet dataset."
+            )
         
         explanations, predicted_labels, attributions = None, None, None
         if self.library == "gradcam":

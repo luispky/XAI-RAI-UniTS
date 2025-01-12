@@ -669,7 +669,8 @@ def sample_filenames(directory: str = IMAGE_DIR, n: int = 5) -> List[str]:
 
     Args:
         directory (str): Path to the directory containing images.
-        n (int): Number of filenames to sample.
+        n (int): Number of filenames to sample. 
+                If -1 is provided, all filenames are returned.
 
     Returns:
         List[str]: A list of randomly sampled filenames without extensions.
@@ -681,7 +682,11 @@ def sample_filenames(directory: str = IMAGE_DIR, n: int = 5) -> List[str]:
     all_files = [f for f in all_files if os.path.isfile(os.path.join(directory, f))]
 
     # Randomly sample n files
-    sampled_files = random.sample(all_files, n)
+    sampled_files = []
+    if n == -1:
+        sampled_files = all_files
+    else:
+        sampled_files = random.sample(all_files, n)
 
     # Remove extensions from filenames
     sampled_filenames = [os.path.splitext(f)[0] for f in sampled_files]
