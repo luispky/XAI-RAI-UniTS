@@ -142,11 +142,16 @@ class ExplanationGenerator:
         # Compute the fraction of noise that caused a change in the predicted label
         changes = np.array([i for i in range(1, n_images) if predicted_labels[i] != predicted_labels[i-1]], dtype=int)
         changes = np.insert(changes, 0, 0) # Include the first image with 0 noise
+
+        changes = np.insert(changes, len(changes), n_images-1)
+
         noise_fraction_changes = changes / n_images
-        
+        if len(changes) == 2:
+            noise_fraction_changes[-1] = 0
+
         explanations_changes = explanations[changes]        
         predicted_labels_changes = [predicted_labels[i] for i in changes]
-        
+
         if attributions is not None:
             return explanations_changes, predicted_labels_changes, noise_fraction_changes, attributions[changes]
         else:

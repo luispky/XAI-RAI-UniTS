@@ -28,9 +28,9 @@ FONT_SIZES: Dict[str, int] = {
     "suptitle": 14,
     "title": 12,
     "label": 11,
-    "ticks": 11,
+    "ticks": 10,
     "text_box": 10,
-    "legend": 9,
+    "legend": 8,
 }
 
 # -- SPACING CONFIGURATION --
@@ -40,7 +40,7 @@ SPACING_BOTTOM: float = 0.06
 SPACING_LEFT: float = 0.04
 SPACING_RIGHT: float = 0.96
 SPACING_H: float = -0.12  # vertical spacing between rows
-SPACING_W: float = 0.02  # horizontal spacing between columns
+SPACING_W: float = 0.07  # horizontal spacing between columns
 
 
 # Dictionary of all the perturbation functions to apply
@@ -193,6 +193,7 @@ def process_image_for_model(
 
         # Pick the second explanation if available, else the first
         j = 1 if len(explanations) >= 2 else 0
+
         noisy_explanation = explanations[j].clone()
 
         # Normalize explanation to [0,1] and clamp
@@ -235,7 +236,7 @@ def process_image_for_model(
     # In the last row, set x-limits and ticks to [0, 0.25, 0.5, 0.75, 1.0]
     for col_idx in range(len(PERTURBATIONS)):
         ax[2, col_idx].set_xlim(0, 1)
-        ax[2, col_idx].set_xticks([0, 0.2, 0.4, 0.6, 0.8])
+        ax[2, col_idx].set_xticks(np.linspace(0, 1, 5)[:-1])
         ax[2, col_idx].tick_params(axis="x", labelsize=FONT_SIZES["ticks"])
 
     # A single x-label for the entire figure
@@ -382,7 +383,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--sample_images",
         type=int,
-        default=5,
+        default=-1,
         help="Number of local images to sample for demonstration (default: 5)."
     )
     parser.add_argument(

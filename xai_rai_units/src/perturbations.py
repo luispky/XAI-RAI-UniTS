@@ -71,7 +71,8 @@ def gaussian_perturbation_linspace(image, magnitude, n, seed=None, **kwargs):
         torch.manual_seed(seed)
 
     # choose a random direction
-    noise = torch.randn_like(image) * magnitude
+    sigma_max = 2
+    noise = torch.randn_like(image) * magnitude * sigma_max
 
     return image_linspace(image, noise, n)
 
