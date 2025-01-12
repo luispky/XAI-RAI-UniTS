@@ -28,11 +28,12 @@ venv/
 
 # Python files
 setup.py
-scripts/accuracy_on_imagenette.py
-scripts/test_alexnet.py
-scripts/test_measure_proba.py
-scripts/test_perturbations.py
-src/alexnet.py
+xai_rai_units/scripts/accuracy_on_imagenette.py
+xai_rai_units/scripts/test_alexnet.py
+# xai_rai_units/scripts/test_measure_proba.py
+# xai_rai_units/scripts/test_perturbations.py
+# xai_rai_units/src/alexnet.py
+xai_rai_units/scripts/main_old.py
 
 # Git files
 .gitattributes
