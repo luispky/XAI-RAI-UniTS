@@ -302,6 +302,8 @@ python xai_rai_units/scripts/main.py \
 
 - [Best-README-Template](https://github.com/othneildrew/Best-README-Template?tab=readme-ov-file): for the README template
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ---
 
 <!-- REFERENCES -->
