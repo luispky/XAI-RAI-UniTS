@@ -38,7 +38,7 @@ SPACING_TOP: float = 0.93     # increase to bring the suptitle closer to the fir
 SPACING_BOTTOM: float = 0.06
 SPACING_LEFT: float = 0.04
 SPACING_RIGHT: float = 0.96
-SPACING_H: float = 0.02       # vertical spacing between rows
+SPACING_H: float = -0.12       # vertical spacing between rows
 SPACING_W: float = 0.02       # horizontal spacing between columns
 
 # Dictionary of all the perturbation functions to apply

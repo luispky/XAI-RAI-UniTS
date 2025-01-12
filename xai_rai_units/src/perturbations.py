@@ -19,13 +19,6 @@ def image_linspace(image, noise, n=100):
     t = torch.linspace(0, 1, n).view(-1, 1, 1, 1)
     segment = image + t * noise
     segment = torch.clamp(segment, min=0, max=1)
-    transforms_pipeline = transforms.Compose([
-        transforms.Normalize(
-            mean=[0.485, 0.456, 0.406],  # Normalize using ImageNet mean
-            std=[0.229, 0.224, 0.225],  # Normalize using ImageNet std
-        ),
-    ])
-    segment = transforms_pipeline(segment)
     return segment
 
 
