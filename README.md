@@ -290,14 +290,6 @@ python xai_rai_units/scripts/main.py \
 
 ---
 
-## License
-
-⚖️ This project is distributed under the project license. Refer to `LICENSE.txt` for details.
-
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
-
----
-
 ## Acknowledgments
 
 - [Best-README-Template](https://github.com/othneildrew/Best-README-Template?tab=readme-ov-file): for the README template
