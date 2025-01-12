@@ -19,13 +19,6 @@ def image_linspace(image, noise, n=100):
     t = torch.linspace(0, 1, n).view(-1, 1, 1, 1)
     segment = image + t * noise
     segment = torch.clamp(segment, min=0, max=1)
-    transforms_pipeline = transforms.Compose([
-        transforms.Normalize(
-            mean=[0.485, 0.456, 0.406],  # Normalize using ImageNet mean
-            std=[0.229, 0.224, 0.225],  # Normalize using ImageNet std
-        ),
-    ])
-    segment = transforms_pipeline(segment)
     return segment
 
 
@@ -41,6 +34,23 @@ def identity_perturbation_linspace(image, n, **kwargs):
         Tensor: Image of shape (n, C, H, W)
     """
     noise = torch.zeros_like(image)
+    return image_linspace(image, noise, n)
+
+
+def increase_contrast_linspace(image, magnitude, n, **kwargs):
+    """
+    Creates a linspace of images with increasing contrast
+
+    Args:
+        image (Tensor): A tensor of shape (n, C, H, W)
+        magnitude (float): Maximum perturbation magnitude
+        n (int): Number of samples to take
+
+    Returns:
+        Tensor: Image of shape (n, C, H, W)
+    """
+    sigma_max = 100
+    noise = (image - image.mean()) * (1 + magnitude * sigma_max)
     return image_linspace(image, noise, n)
 
 
@@ -80,7 +90,9 @@ def blur_perturbation_linspace(image, magnitude, n, epsilon=1e-3, **kwargs):
         Tensor: Image of shape (n, C, H, W)
     """
     kernel_size = int(int(magnitude * 50 * 2) + 1)
-    sigma_values = torch.linspace(epsilon, magnitude * max(image.shape)/2, n, device=image.device)
+
+    sigma_max = magnitude * max(image.shape)/5   # max blur
+    sigma_values = torch.linspace(epsilon, sigma_max, n, device=image.device)
 
     out = []
     for sigma in sigma_values:
@@ -105,12 +117,12 @@ def occlusion_perturbation_linspace(image, magnitude, n, fill_value=0, **kwargs)
     """
 
     # choose a random occlusion region
-    sigma = magnitude * max(image.shape) * 3
+    max_sigma = magnitude * max(image.shape) * 3   # 3 * image size
     _, H, W = image.shape
-    x1 = torch.linspace(W, W - sigma, n, device=image.device).int() // 2
-    y1 = torch.linspace(H, H - sigma, n, device=image.device).int() // 2
-    x2 = torch.linspace(W, W + sigma, n, device=image.device).int() // 2
-    y2 = torch.linspace(H, H + sigma, n, device=image.device).int() // 2
+    x1 = torch.linspace(W, W - max_sigma, n, device=image.device).int() // 2
+    y1 = torch.linspace(H, H - max_sigma, n, device=image.device).int() // 2
+    x2 = torch.linspace(W, W + max_sigma, n, device=image.device).int() // 2
+    y2 = torch.linspace(H, H + max_sigma, n, device=image.device).int() // 2
     out = []
     for i in range(n):
         occluded = image.clone()

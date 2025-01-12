@@ -30,16 +30,18 @@ FONT_SIZES: Dict[str, int] = {
     "label": 11,
     "ticks": 11,
     "text_box": 10,
+    "legend": 9,
 }
 
 # -- SPACING CONFIGURATION --
 # You can adjust these to tighten or loosen the subplots.
-SPACING_TOP: float = 0.93     # increase to bring the suptitle closer to the first row
+SPACING_TOP: float = 0.93  # increase to bring the suptitle closer to the first row
 SPACING_BOTTOM: float = 0.06
 SPACING_LEFT: float = 0.04
 SPACING_RIGHT: float = 0.96
-SPACING_H: float = 0.02       # vertical spacing between rows
-SPACING_W: float = 0.02       # horizontal spacing between columns
+SPACING_H: float = -0.12  # vertical spacing between rows
+SPACING_W: float = 0.02  # horizontal spacing between columns
+
 
 # Dictionary of all the perturbation functions to apply
 PERTURBATIONS: Dict[str, Callable] = {
@@ -49,6 +51,7 @@ PERTURBATIONS: Dict[str, Callable] = {
     "Occlusion": pert.occlusion_perturbation_linspace,
     "Void": pert.void_perturbation_linspace,
     "InvGrad": pert.inv_grad_perturbation_linspace,
+    "Contrast": pert.increase_contrast_linspace,
 }
 
 # Tuple of model names to evaluate (used if model_name == "all")
@@ -59,15 +62,16 @@ MODEL_NAMES = (
     "vit",
 )
 
+
 def plot_model_classification(
-    model: torch.nn.Module,
-    images: torch.Tensor,
-    labels: List[str],
-    magnitude: float = 0.01,
-    n_classes: int = 4,
-    do_yticks: bool = True,
-    noise_prediction_change: float = 0.0
-) -> None:
+        model: torch.nn.Module,
+        images: torch.Tensor,
+        labels: List[str],
+        magnitude: float = 0.01,
+        n_classes: int = 4,
+        do_yticks: bool = True,
+        noise_prediction_change: float = 0.0,
+        do_legend: bool = True):
     """
     Plot the classification probabilities of the model for a range of perturbations.
     The horizontal axis corresponds to noise fractions from 0 to 1.
@@ -95,26 +99,27 @@ def plot_model_classification(
     else:
         plt.yticks([])
         plt.ylabel("")
-        
+
     # Add vertical line at noise_prediction_change
     plt.axvline(noise_prediction_change, color="black", linestyle="--", linewidth=1.0)
     plt.ylim(-0.05, 1.05)
     plt.tick_params(axis="both", labelsize=FONT_SIZES["ticks"])
-    plt.legend(fontsize=FONT_SIZES["ticks"])
+
+    if do_legend:
+        plt.legend(fontsize=FONT_SIZES["ticks"], prop={'size': FONT_SIZES["legend"]})
 
 
 def process_image_for_model(
-    filename: str,
-    image: torch.Tensor,
-    model: torch.nn.Module,
-    target_layers,
-    reshape_transform,
-    generator: ExplanationGenerator,
-    labels: List[str],
-    n_perturbations: int,
-    magnitude: float, 
-    show_figures: bool = True,
-) -> None:
+        filename: str,
+        image: torch.Tensor,
+        model: torch.nn.Module,
+        target_layers,
+        reshape_transform,
+        generator: ExplanationGenerator,
+        labels: List[str],
+        n_perturbations: int,
+        magnitude: float,
+        show_figures: bool = True):
     """
     Generate perturbed images, produce explanations, and plot:
       1. The last perturbed image (row 1).
@@ -200,9 +205,11 @@ def process_image_for_model(
         plt.axis("off")
 
         # Text box above explanation
-        label_text = f"{pred_labels[j]}:\n{noise_fraction_changes[j]:.2%}"
+        label_text = f"{pred_labels[j]}"
+        if noise_fraction_changes[j] > 0:
+            label_text += f'\n(mag={noise_fraction_changes[j]:.1%})'
         ax[1, i_pert].text(
-            0.5, 0.98,
+            0.5, 0.99,
             label_text,
             color="white",
             fontsize=FONT_SIZES["text_box"],
@@ -221,7 +228,8 @@ def process_image_for_model(
             labels=labels,
             magnitude=magnitude,
             do_yticks=do_yticks,
-            noise_prediction_change=noise_fraction_changes[j]
+            noise_prediction_change=float(noise_fraction_changes[j]),
+            do_legend=(i_pert == 0),
         )
 
     # In the last row, set x-limits and ticks to [0, 0.25, 0.5, 0.75, 1.0]
@@ -255,15 +263,16 @@ def process_image_for_model(
         print(f"Saved figure to {output_filepath}")
         plt.close(fig)
 
+
 def main(
-    library: str = "gradcam",
-    method: str = "GradCAM",
-    sample_images: int = 5,
-    n_perturbations: int = 30,
-    magnitude: float = 0.1,
-    seed: int = 42,
-    model_name: Optional[str] = "alexnet",
-    show_figures: bool = True,
+        library: str = "gradcam",
+        method: str = "GradCAM",
+        sample_images: int = 5,
+        n_perturbations: int = 30,
+        magnitude: float = 0.1,
+        seed: int = 42,
+        model_name: Optional[str] = "alexnet",
+        show_figures: bool = True,
 ) -> None:
     """
     Main function to run the perturbation and explanation generation pipeline:
@@ -284,14 +293,15 @@ def main(
         seed (int, optional): Random seed for reproducibility (default: 42).
         model_name (str, optional): Defaults to "alexnet". If set to "all", runs all models in MODEL_NAMES.
             Otherwise, runs only the specified model.
-        show_figures (bool, optional): If True (default), display figures; if False, saves them to FIGURES_DIR/robustness.
+        show_figures (bool, optional): If True (default), display figures; if False,
+        saves them to FIGURES_DIR/robustness.
     
     Returns:
         None
     """
     # Fix the random seed for reproducibility
     set_seed(seed)
-    
+
     # Always use LABELS_PATH directly
     labels = load_labels(str(LABELS_PATH))
 
@@ -325,6 +335,7 @@ def main(
                 show_figures=show_figures
             )
 
+
 if __name__ == "__main__":
     """
     Parse command line arguments for controlling various parameters:
@@ -341,7 +352,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--n_perturbations",
         type=int,
-        default=30,
+        default=40,
         help="Number of images used for perturbation (default: 30)."
     )
     parser.add_argument(
