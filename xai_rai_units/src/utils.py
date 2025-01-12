@@ -171,7 +171,8 @@ def show_images(images: torch.Tensor,
                 labels: Optional[Union[List[str], torch.Tensor]] = None,
                 correct_match: Union[list[bool], None] = None,
                 save_fig: bool = False,
-                filename: str = "images"):
+                filename: str = "images", 
+                show: bool = True):
     """
     Displays a batch of images in a grid, optionally with labels and match indicators.
 
@@ -233,7 +234,8 @@ def show_images(images: torch.Tensor,
     if save_fig:
         filepath = FIGURES_DIR / f"{filename}.png"
         plt.savefig(filepath, dpi=300, bbox_inches="tight")
-    plt.show()
+    if show:
+        plt.show()
     plt.close()
 
 

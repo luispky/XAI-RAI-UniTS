@@ -1,0 +1,18 @@
+# config.yaml
+library: "gradcam"              # Library for generating explanations
+method: "GradCAM"               # Explanation method to use
+model_names:                    # List of models to use
+  - "alexnet"
+  - "resnet50"
+  - "swin_transformer"
+  - "vit"
+perturbation_names:             # List of perturbation methods to use
+  - "Gaussian"
+  - "Blur"
+  - "Occlusion"
+  - "Void"
+  - "InvGrad" 
+sample_images: 5                # Number of sample images to process
+n_perturbations: 5             # Number of perturbed images to generate for analysis
+magnitude: 0.3                  # Maximum noise magnitude for generating perturbed images
+seed: 24                        # Random seed for reproducibility

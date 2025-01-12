@@ -12,7 +12,7 @@
 #### 📚 University of Trieste, Academic Year 2024–2025  
 #### 🎓 Data Science and Artificial Intelligence Master's Program  
 
-[![Logo](figures/gradcam_llama_resnet50-logo.png)](https://github.com/luispky/XAI-RAI-UniTS)
+[![Logo](figures/gradcam_GradCAM_resnet50_Gaussian_llama-logo.png)](https://github.com/luispky/XAI-RAI-UniTS)
 
 </div>
 
@@ -156,6 +156,7 @@ This script generates visual explanations for images using Explainable AI (XAI) 
 | `--method`            | `str`  | "GradCAM" | Explanation method (e.g., `GradCAM`, `LayerGradCam`).                                         |
 | `--model_name`        | `str`  | "resnet50" | Pre-trained model to use (`alexnet`, `resnet50`, etc.).                                       |
 | `--sample_images`     | `int`  | 5         | Number of images to process.                                                                 |
+| `--perturbation_name` | `str`  | "Gaussian" | Name of the perturbation method to use (e.g., `Identity`, `Blur`).                           |
 | `--n_perturbations`   | `int`  | 5         | Number of perturbed images to generate for analysis.                                          |
 | `--magnitude`         | `float`| 0.2       | Maximum noise magnitude for image perturbation.                                               |
 | `--seed`              | `int`  | 24        | Random seed for reproducibility.                                                             |
@@ -168,6 +169,7 @@ python xai_rai_units/scripts/explanations_perturbed_images.py \
   --method GradCAM \
   --model_name resnet50 \
   --sample_images 5 \
+  --perturbation_name Gaussian \
   --n_perturbations 5 \
   --magnitude 0.2 \
   --seed 24
