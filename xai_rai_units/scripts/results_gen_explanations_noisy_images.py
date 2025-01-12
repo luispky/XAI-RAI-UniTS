@@ -1,6 +1,4 @@
-import os
 import yaml
-from pathlib import Path
 from typing import Dict, Any
 
 from xai_rai_units.src.explanations import ExplanationGenerator
@@ -14,6 +12,7 @@ from xai_rai_units.src.utils import (
 from xai_rai_units.src.paths import FIGURES_DIR
 from xai_rai_units.src import perturbations as pert
 
+
 # Mapping of perturbation names to their corresponding functions
 PERTURBATIONS = {
     "Identity": pert.identity_perturbation_linspace,
@@ -24,25 +23,26 @@ PERTURBATIONS = {
     "InvGrad": pert.inv_grad_perturbation_linspace,
 }
 
+
 def process_images(config: Dict[str, Any]) -> None:
     """
-    Process images by applying specified perturbations and generating explanations,
+    Process images by applying specified perturbations and generating explanations
     based on the parameters in the provided configuration dictionary.
 
     Steps:
       1. Set random seed for reproducibility.
-      2. Sample or load specified number of images.
+      2. Sample or load the specified number of images.
       3. For each model in 'model_names':
-         a. For each perturbation function in PERTURBATIONS (filtered by 'perturbation_names' in the config),
+         a. For each perturbation function in PERTURBATIONS (filtered by 'perturbation_names' in the config):
             i. Generate a sequence of perturbed images.
             ii. Create an ExplanationGenerator and generate explanations for the perturbed images.
             iii. Display and/or save the explanation images with their predicted labels.
             iv. Skip if the output file already exists.
-    
+
     Args:
-        config (Dict[str, Any]): A dictionary containing configuration keys such as
-            'seed', 'sample_images', 'model_names', 'magnitude', 'n_perturbations', 'library', 
-            'method', and 'perturbation_names'.
+        config (Dict[str, Any]): Configuration dictionary containing keys such as
+            'seed', 'sample_images', 'model_names', 'magnitude', 'n_perturbations',
+            'library', 'method', and 'perturbation_names'.
     """
     # 1. Set random seed for reproducibility
     set_seed(config["seed"])
@@ -61,7 +61,7 @@ def process_images(config: Dict[str, Any]) -> None:
                 continue
 
             print(f"\nProcessing: Model={model_name}, Perturbation={perturbation_name}")
-            
+
             for filename, image in zip(filenames, images):
                 # Generate a directory for saving explanation images
                 explanations_dir = FIGURES_DIR / "explanations"
@@ -70,7 +70,7 @@ def process_images(config: Dict[str, Any]) -> None:
                 # Generate the output filename
                 output_filename = (
                     f"{config['library']}_{config['method']}_{model_name}_"
-                    f"{perturbation_name}_{filename}"
+                    f"{perturbation_name}_mag-{config['magnitude']}_{filename}"
                 )
                 output_path = explanations_dir / output_filename
 
@@ -82,14 +82,18 @@ def process_images(config: Dict[str, Any]) -> None:
                 try:
                     # i. Generate a sequence of perturbed images
                     perturbed_images = perturbation_func(
-                        image, 
-                        magnitude=config["magnitude"], 
-                        n=config["n_perturbations"], 
-                        model=model
+                        image,
+                        magnitude=config["magnitude"],
+                        n=config["n_perturbations"],
+                        model=model,
                     )
 
                     # ii. Create an ExplanationGenerator to generate explanations
-                    generator = ExplanationGenerator(model, config["library"], config["method"])
+                    generator = ExplanationGenerator(
+                        model=model,
+                        library=config["library"],
+                        method=config["method"],
+                    )
 
                     # iii. Generate explanations and predicted labels
                     explanations, pred_labels, noise_fraction_changes, _ = generator.generate_explanations(
@@ -103,32 +107,35 @@ def process_images(config: Dict[str, Any]) -> None:
                     print(f"\n{'Label':<20} | {'Percentage of Noise':<20}")
                     print('-' * 40)
                     for label, noise in zip(pred_labels, noise_fraction_changes):
-                        print(f"{str(label):<20} | {noise:.2f}")
+                        print(f"{label:<20} | {noise:.2f}")
 
                     # iv. Save the generated explanations (no interactive display)
                     show_images(
-                        explanations,
+                        images=explanations,
                         labels=pred_labels,
                         save_fig=True,
                         filename=str(output_path),  # pass as string
                         show=False,
+                        proportions=noise_fraction_changes,
                     )
 
-                except Exception as e:
-                    print(f"\nAn error occurred: {e}")
+                except Exception as err:
+                    print(f"\nAn error occurred: {err}")
                     continue
+
 
 def main() -> None:
     """
-    Main execution function to load configuration and process images.
+    Main entry point to load configuration and process images.
+    Expects a YAML config file named 'explanations_config.yaml'.
     """
-    # Load the configuration from the YAML file
     config_file = "explanations_config.yaml"
-    with open(config_file, "r") as file:
+    with open(config_file, "r", encoding="utf-8") as file:
         config = yaml.safe_load(file)
 
     # Process images based on the configuration
     process_images(config)
+
 
 if __name__ == "__main__":
     """

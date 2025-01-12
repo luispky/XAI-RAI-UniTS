@@ -167,20 +167,29 @@ def normalize_images(images: torch.Tensor) -> np.ndarray:
     return images.cpu().numpy()  # Ensure conversion is performed on CPU for efficiency
 
 
-def show_images(images: torch.Tensor,
-                labels: Optional[Union[List[str], torch.Tensor]] = None,
-                correct_match: Union[list[bool], None] = None,
-                save_fig: bool = False,
-                filename: str = "images", 
-                show: bool = True):
+def show_images(
+    images: torch.Tensor,
+    labels: Optional[Union[List[str], torch.Tensor]] = None,
+    correct_match: Union[List[bool], None] = None,
+    save_fig: bool = False,
+    filename: str = "images",
+    show: bool = True,
+    proportions: Optional[Union[List[float], np.ndarray]] = None,
+):
     """
-    Displays a batch of images in a grid, optionally with labels and match indicators.
+    Displays a batch of images in a grid, optionally with labels, correctness indicators,
+    and additional numeric values (e.g., confidence or noise fraction).
 
     :param images: Tensor of images with shape (batch_size, channels, height, width).
     :param labels: List of labels for each image, or None if no labels are provided.
     :param correct_match: List of booleans indicating match correctness, or None.
     :param save_fig: Whether to save the figure as an image file. Defaults to False.
     :param filename: Name of the file to save the figure as. Defaults to "images".
+    :param show: Whether to display the figure interactively. Defaults to True.
+    :param proportions: Optional list/array of floats (0 to 1) representing additional
+                       numeric information (e.g., confidence, noise fraction) for each image.
+                       If provided, it will be shown alongside the label, e.g.:
+                       "label : 75.00%" or "label : 0.75".
     """
     images = images.float()
 
@@ -190,7 +199,7 @@ def show_images(images: torch.Tensor,
 
     # Normalize and create a grid of images
     grid_img = torchvision.utils.make_grid(images, nrow=8, padding=2, normalize=True)
-    npimg = grid_img.permute(1, 2, 0).numpy()  # Rearrange to (H, W, C) format
+    npimg = grid_img.permute(1, 2, 0).numpy()  # Rearrange to (H, W, C)
 
     # Normalize labels
     if isinstance(labels, torch.Tensor):
@@ -198,14 +207,13 @@ def show_images(images: torch.Tensor,
     elif labels is None:
         labels = []
 
-    # Plot the images
     fig, ax = plt.subplots(figsize=(12, 8))
     ax.imshow(npimg)
     ax.axis("off")
 
     if labels:
         n_images = images.size(0)  # Number of images in the batch
-        nrow = 8  # Number of images per row in the grid
+        nrow = 8                   # Number of images per row in the grid
         img_size = images.size(2) + 2  # Adjust based on padding
 
         for i in range(n_images):
@@ -215,6 +223,12 @@ def show_images(images: torch.Tensor,
             y_pos = row * img_size
 
             label_text = labels[i] if i < len(labels) else "No Label"
+
+            # If proportions are provided, append them to the label
+            if proportions is not None:
+                label_text += f": {proportions[i]:.2%} [*]"
+
+            # Decide text color based on correctness
             color = (
                 "white" if correct_match is None
                 else ("green" if correct_match[i] else "red")

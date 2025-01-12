@@ -1,98 +1,79 @@
-NOW ENSURE THIS OTHER CODE IS ALSO SAVING THE PLOTS PROPERLY WITHOUT MODIFYING ITS FUNCTIONALITY!!! 
+I have this python function to plot images and their corresponding labels. 
 ```python
-import os
-import yaml
-from xai_rai_units.src.explanations import ExplanationGenerator
-from xai_rai_units.src.utils import (
-    load_local_images,
-    set_seed,
-    show_images,
-    setup_model_and_layers,
-    sample_filenames,
-)
-from xai_rai_units.src.paths import FIGURES_DIR
-from xai_rai_units.src import perturbations as pert
-
-# Mapping of perturbation names to functions
-PERTURBATIONS = {
-    "Identity": pert.identity_perturbation_linspace,
-    "Gaussian": pert.gaussian_perturbation_linspace,
-    "Blur": pert.blur_perturbation_linspace,
-    "Occlusion": pert.occlusion_perturbation_linspace,
-    "Void": pert.void_perturbation_linspace,
-    "InvGrad": pert.inv_grad_perturbation_linspace,
-}
-
-def process_images(config):
+def show_images(images: torch.Tensor,
+                labels: Optional[Union[List[str], torch.Tensor]] = None,
+                correct_match: Union[list[bool], None] = None,
+                save_fig: bool = False,
+                filename: str = "images", 
+                show: bool = True):
     """
-    Process images across different models and perturbation methods based on the provided config.
+    Displays a batch of images in a grid, optionally with labels and match indicators.
+
+    :param images: Tensor of images with shape (batch_size, channels, height, width).
+    :param labels: List of labels for each image, or None if no labels are provided.
+    :param correct_match: List of booleans indicating match correctness, or None.
+    :param save_fig: Whether to save the figure as an image file. Defaults to False.
+    :param filename: Name of the file to save the figure as. Defaults to "images".
     """
-    set_seed(config["seed"])
-    filenames = sample_filenames(n=config["sample_images"])
-    images = load_local_images(filenames)
+    images = images.float()
 
-    for model_name in config["model_names"]:
-        model, target_layers, reshape_transform = setup_model_and_layers(model_name)
-        for perturbation_name, perturbation_func in PERTURBATIONS.items():
-            if perturbation_name not in config["perturbation_names"]:
-                continue  # Skip perturbations not listed in the config
+    # Ensure the image tensor is in the correct shape
+    if images.size(3) == 3:  # If channel is last, move it to first
+        images = images.permute(0, 3, 1, 2)
 
-            print(f"\nProcessing: Model={model_name}, Perturbation={perturbation_name}")
-            for filename, image in zip(filenames, images):
-                # Generate the output filename
-                explanations_dir = FIGURES_DIR / "explanations"
-                explanations_dir.mkdir(parents=True, exist_ok=True)
-                output_filename = f"{config['library']}_{config['method']}_{model_name}_{perturbation_name}_{filename}"
-                output_path = os.path.join(explanations_dir, output_filename)
+    # Normalize and create a grid of images
+    grid_img = torchvision.utils.make_grid(images, nrow=8, padding=2, normalize=True)
+    npimg = grid_img.permute(1, 2, 0).numpy()  # Rearrange to (H, W, C) format
 
-                # Check if the file already exists
-                if os.path.exists(output_path):
-                    print(f"Skipping existing file: {output_path}")
-                    continue
+    # Normalize labels
+    if isinstance(labels, torch.Tensor):
+        labels = [str(label.item()) for label in labels]
+    elif labels is None:
+        labels = []
 
-                try:
-                    # Generate a sequence of perturbed images
-                    perturbed_images = perturbation_func(
-                        image, magnitude=config["magnitude"], n=config["n_perturbations"], model=model
-                    )
+    # Plot the images
+    fig, ax = plt.subplots(figsize=(12, 8))
+    ax.imshow(npimg)
+    ax.axis("off")
 
-                    # Initialize the explanation generator
-                    generator = ExplanationGenerator(model, config["library"], config["method"])
+    if labels:
+        n_images = images.size(0)  # Number of images in the batch
+        nrow = 8  # Number of images per row in the grid
+        img_size = images.size(2) + 2  # Adjust based on padding
 
-                    # Generate explanations and predicted labels
-                    explanations, pred_labels, noise_fraction_changes, _ = generator.generate_explanations(
-                        perturbed_images=perturbed_images,
-                        class_label_filename_imagenet=filename,
-                        target_layers=target_layers,
-                        reshape_transform=reshape_transform,
-                        resnet50_likely_class=True,
-                    )
+        for i in range(n_images):
+            row = i // nrow
+            col = i % nrow
+            x_pos = col * img_size + img_size // 2 + 1
+            y_pos = row * img_size
 
-                    print(f"\n{'Label':<20} | {'Percentage of Noise':<20}")
-                    print('-' * 40)
-                    for label, noise in zip(pred_labels, noise_fraction_changes):
-                        print(f"{str(label):<20} | {noise:.2f}")
+            label_text = labels[i] if i < len(labels) else "No Label"
+            color = (
+                "white" if correct_match is None
+                else ("green" if correct_match[i] else "red")
+            )
 
-                    # Save the generated explanations
-                    show_images(
-                        explanations,
-                        labels=pred_labels,
-                        save_fig=True,
-                        filename=output_path,
-                        show=False,
-                    )
+            # Display label above each image
+            ax.text(
+                x_pos, y_pos, label_text,
+                color=color,
+                fontsize=10,
+                ha="center",
+                va="center",
+                bbox=dict(facecolor="black", alpha=0.6, edgecolor="none"),
+            )
 
-                except Exception as e:
-                    print(f"\n{e}")
-                    continue
-
-if __name__ == "__main__":
-    # Load the configuration from the YAML file
-    config_file = "explanations_config.yaml"
-    with open(config_file, "r") as file:
-        config = yaml.safe_load(file)
-
-    # Process images based on the configuration
-    process_images(config)
+    plt.tight_layout()
+    if save_fig:
+        filepath = FIGURES_DIR / f"{filename}.png"
+        plt.savefig(filepath, dpi=300, bbox_inches="tight")
+    if show:
+        plt.show()
+    plt.close()
 ```
-ADD DOCUMENTATION, IMPROVE READABILITY, AND ENSURE THE CODE FOLLOW THE BEST PRACTICES.
+I want to add an optional numpy array parameter to include a number next to the label. This number is a number between 0 and 1 that can be the confidence of the model for the label or the fraction of noise that caused the prediction to be wrong. The idea is similar to the following.
+```python
+label_text = f"{labels[i]} : {proportion_array[i]:.2%}" if i < len(labels) else "No Label"
+```
+MODIFY THE FUNCTION TO INCLUDE THE PROPORTION ARRAY WITHOUT BREAKING THE CURRENT FUNCTIONALITY.
+FIND A GOOD NAME FOR THE NEW PARAMETER IF POSSIBLE.

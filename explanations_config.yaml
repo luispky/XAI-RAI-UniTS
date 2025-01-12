@@ -12,7 +12,7 @@ perturbation_names:             # List of perturbation methods to use
   - "Occlusion"
   - "Void"
   - "InvGrad" 
-sample_images: 5                # Number of sample images to process
+sample_images: -1                # Number of sample images to process, -1 for all
 n_perturbations: 5             # Number of perturbed images to generate for analysis
 magnitude: 0.3                  # Maximum noise magnitude for generating perturbed images
 seed: 24                        # Random seed for reproducibility

@@ -75,6 +75,7 @@ def main(args):
                 explanations,
                 labels=pred_labels,
                 save_fig=False,
+                proportions=noise_fraction_changes,
             )
         
         except Exception as e:
