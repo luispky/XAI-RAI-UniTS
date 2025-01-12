@@ -132,7 +132,7 @@ def process_image_for_model(
         labels (List[str]): List of class labels for the model's output indices.
         n_perturbations (int): Number of images used for perturbation (linspace).
         magnitude (float): Magnitude of the perturbation.
-        show_figures (bool): If True (default), display figures; if False, saves to FIGURES_DIR.
+        show_figures (bool): If True (default), display figures; if False, saves to FIGURES_DIR/robustness.
     
     Returns:
         None
@@ -141,11 +141,13 @@ def process_image_for_model(
         # Show the figure interactively, do not save
         output_filepath = None
     else:
-        # Save the figure to the predetermined FIGURES_DIR
+        # Save the figure to the "robustness" subdirectory under FIGURES_DIR
         output_filename = (
             f"{model.__class__.__name__}_mag{magnitude}_n-pert{n_perturbations}_{filename}"
         )
-        output_filepath = FIGURES_DIR / f"{output_filename}.png"
+        robustness_dir = FIGURES_DIR / "robustness"
+        robustness_dir.mkdir(parents=True, exist_ok=True)
+        output_filepath = robustness_dir / f"{output_filename}.png"
         # If the output file already exists, skip processing
         if output_filepath.exists():
             print(f"Skipping {filename}: '{output_filepath}' already exists.")
@@ -283,7 +285,7 @@ def main(
         seed (int, optional): Random seed for reproducibility (default: 42).
         model_name (str, optional): Defaults to "alexnet". If set to "all", runs all models in MODEL_NAMES.
             Otherwise, runs only the specified model.
-        show_figures (bool, optional): If True (default), display figures; if False, saves them to FIGURES_DIR.
+        show_figures (bool, optional): If True (default), display figures; if False, saves them to FIGURES_DIR/robustness.
     
     Returns:
         None
@@ -385,7 +387,7 @@ if __name__ == "__main__":
         default=True,
         help=(
             "By default, figures are shown on screen. "
-            "If specified, figures are saved to FIGURES_DIR instead of shown interactively."
+            "If specified, figures are saved to FIGURES_DIR/robustness instead of shown interactively."
         ),
     )
 

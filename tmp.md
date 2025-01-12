@@ -1,8 +1,7 @@
+NOW ENSURE THIS OTHER CODE IS ALSO SAVING THE PLOTS PROPERLY WITHOUT MODIFYING ITS FUNCTIONALITY!!! 
+```python
 import os
 import yaml
-from pathlib import Path
-from typing import Dict, Any
-
 from xai_rai_units.src.explanations import ExplanationGenerator
 from xai_rai_units.src.utils import (
     load_local_images,
@@ -14,7 +13,7 @@ from xai_rai_units.src.utils import (
 from xai_rai_units.src.paths import FIGURES_DIR
 from xai_rai_units.src import perturbations as pert
 
-# Mapping of perturbation names to their corresponding functions
+# Mapping of perturbation names to functions
 PERTURBATIONS = {
     "Identity": pert.identity_perturbation_linspace,
     "Gaussian": pert.gaussian_perturbation_linspace,
@@ -24,74 +23,43 @@ PERTURBATIONS = {
     "InvGrad": pert.inv_grad_perturbation_linspace,
 }
 
-def process_images(config: Dict[str, Any]) -> None:
+def process_images(config):
     """
-    Process images by applying specified perturbations and generating explanations,
-    based on the parameters in the provided configuration dictionary.
-
-    Steps:
-      1. Set random seed for reproducibility.
-      2. Sample or load specified number of images.
-      3. For each model in 'model_names':
-         a. For each perturbation function in PERTURBATIONS (filtered by 'perturbation_names' in the config),
-            i. Generate a sequence of perturbed images.
-            ii. Create an ExplanationGenerator and generate explanations for the perturbed images.
-            iii. Display and/or save the explanation images with their predicted labels.
-            iv. Skip if the output file already exists.
-    
-    Args:
-        config (Dict[str, Any]): A dictionary containing configuration keys such as
-            'seed', 'sample_images', 'model_names', 'magnitude', 'n_perturbations', 'library', 
-            'method', and 'perturbation_names'.
+    Process images across different models and perturbation methods based on the provided config.
     """
-    # 1. Set random seed for reproducibility
     set_seed(config["seed"])
-
-    # 2. Load images (sample_filenames picks random images if no explicit list is given)
     filenames = sample_filenames(n=config["sample_images"])
     images = load_local_images(filenames)
 
-    # 3. Process each model and perturbation
     for model_name in config["model_names"]:
         model, target_layers, reshape_transform = setup_model_and_layers(model_name)
-
         for perturbation_name, perturbation_func in PERTURBATIONS.items():
-            # Only use perturbations specified in the config
             if perturbation_name not in config["perturbation_names"]:
-                continue
+                continue  # Skip perturbations not listed in the config
 
             print(f"\nProcessing: Model={model_name}, Perturbation={perturbation_name}")
-            
             for filename, image in zip(filenames, images):
-                # Generate a directory for saving explanation images
+                # Generate the output filename
                 explanations_dir = FIGURES_DIR / "explanations"
                 explanations_dir.mkdir(parents=True, exist_ok=True)
+                output_filename = f"{config['library']}_{config['method']}_{model_name}_{perturbation_name}_{filename}"
+                output_path = os.path.join(explanations_dir, output_filename)
 
-                # Generate the output filename
-                output_filename = (
-                    f"{config['library']}_{config['method']}_{model_name}_"
-                    f"{perturbation_name}_{filename}"
-                )
-                output_path = explanations_dir / output_filename
-
-                # If the file already exists, skip
-                if output_path.exists():
+                # Check if the file already exists
+                if os.path.exists(output_path):
                     print(f"Skipping existing file: {output_path}")
                     continue
 
                 try:
-                    # i. Generate a sequence of perturbed images
+                    # Generate a sequence of perturbed images
                     perturbed_images = perturbation_func(
-                        image, 
-                        magnitude=config["magnitude"], 
-                        n=config["n_perturbations"], 
-                        model=model
+                        image, magnitude=config["magnitude"], n=config["n_perturbations"], model=model
                     )
 
-                    # ii. Create an ExplanationGenerator to generate explanations
+                    # Initialize the explanation generator
                     generator = ExplanationGenerator(model, config["library"], config["method"])
 
-                    # iii. Generate explanations and predicted labels
+                    # Generate explanations and predicted labels
                     explanations, pred_labels, noise_fraction_changes, _ = generator.generate_explanations(
                         perturbed_images=perturbed_images,
                         class_label_filename_imagenet=filename,
@@ -105,23 +73,20 @@ def process_images(config: Dict[str, Any]) -> None:
                     for label, noise in zip(pred_labels, noise_fraction_changes):
                         print(f"{str(label):<20} | {noise:.2f}")
 
-                    # iv. Save the generated explanations (no interactive display)
+                    # Save the generated explanations
                     show_images(
                         explanations,
                         labels=pred_labels,
                         save_fig=True,
-                        filename=str(output_path),  # pass as string
+                        filename=output_path,
                         show=False,
                     )
 
                 except Exception as e:
-                    print(f"\nAn error occurred: {e}")
+                    print(f"\n{e}")
                     continue
 
-def main() -> None:
-    """
-    Main execution function to load configuration and process images.
-    """
+if __name__ == "__main__":
     # Load the configuration from the YAML file
     config_file = "explanations_config.yaml"
     with open(config_file, "r") as file:
@@ -129,10 +94,5 @@ def main() -> None:
 
     # Process images based on the configuration
     process_images(config)
-
-if __name__ == "__main__":
-    """
-    Entrypoint for running the script directly. Loads the config from a YAML file
-    and calls process_images() to apply perturbations and generate explanations.
-    """
-    main()
+```
+ADD DOCUMENTATION, IMPROVE READABILITY, AND ENSURE THE CODE FOLLOW THE BEST PRACTICES.
