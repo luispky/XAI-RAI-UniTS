@@ -510,7 +510,7 @@ def load_model(model_name, verbose: bool =False):
         if model_name == "alexnet":
             model = alexnet(weights=AlexNet_Weights.IMAGENET1K_V1)
         elif model_name == "resnet50":
-            model = resnet50(weights=ResNet50_Weights.IMAGENET1K_V1)
+            model = resnet50(weights=ResNet50_Weights.IMAGENET1K_V2)
         elif model_name == "swin_transformer":
             model = timm.create_model("swin_base_patch4_window7_224", pretrained=True)
         elif model_name == "vit":

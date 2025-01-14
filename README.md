@@ -40,14 +40,13 @@
     - [`explanations_perturbed_images.py`](#explanations_perturbed_imagespy)
       - [Command-Line Arguments](#command-line-arguments)
       - [Example Usage](#example-usage)
-    - [Supported Methods and Models](#supported-methods-and-models)
-      - [Methods](#methods)
+    - [Supported Models and Explanation Methods](#supported-models-and-explanation-methods)
       - [Models](#models)
+      - [Explanation Methods](#explanation-methods)
     - [`main.py`](#mainpy)
       - [Overview](#overview)
       - [Perturbation Techniques](#perturbation-techniques)
       - [Example Usage](#example-usage-1)
-  - [License](#license)
   - [Acknowledgments](#acknowledgments)
 
 </details>
@@ -221,26 +220,26 @@ python xai_rai_units/scripts/explanations_perturbed_images.py \
 
 ---
 
-### Supported Methods and Models
-
-#### Methods
-
-| 🔍 Grad-CAM Variants | 🎯 Captum Methods     |
-|----------------------|----------------------|
-| GradCAM              | LayerGradCam        |
-| GradCAM++            | DeepLift            |
-| XGradCAM             | LayerConductance    |
-| EigenCAM             | GuidedGradCam       |
-| HiResCAM             | DeepLiftSHAP        |
+### Supported Models and Explanation Methods
 
 #### Models
 
 | 📊 Model Name       | 🖥️ Code             |
 |---------------------|---------------------|
-| AlexNet            | `alexnet`           |
-| ResNet50           | `resnet50`          |
-| Swin Transformer   | `swin_transformer`  |
-| Vision Transformer | `vit`               |
+| [AlexNet](https://pytorch.org/vision/main/models/generated/torchvision.models.alexnet.html#torchvision.models.AlexNet_Weights)            | `alexnet`           |
+| [ResNet50](https://pytorch.org/vision/main/models/generated/torchvision.models.resnet50.html)           | `resnet50`          |
+| [Swin Transformer](https://huggingface.co/microsoft/swin-base-patch4-window7-224)   | `swin_transformer`  |
+| [Vision Transformer](https://huggingface.co/google/vit-base-patch16-224) | `vit`               |
+
+#### Explanation Methods
+
+| 🔍 Grad-CAM Variants | 🎯 Captum Methods     |
+|----------------------|-----------------------|
+| GradCAM              | LayerGradCam (only `alexnet` and `resnet50`)          |
+| GradCAM++            | GuidedGradCam (only `alexnet` and `resnet50`)         |
+| XGradCAM             | LayerConductance      |
+| EigenCAM             | DeepLift              |
+| HiResCAM             | DeepLiftSHAP          |
 
 ---
 

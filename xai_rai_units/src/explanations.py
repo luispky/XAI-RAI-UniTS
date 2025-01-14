@@ -36,10 +36,10 @@ GRADCAM_METHODS = {
 
 CAPTUM_METHODS = {
     "LayerGradCam": LayerGradCam,
-    "LayerDeepLift": LayerDeepLift,
-    "LayerConductance": LayerConductance,
     "GuidedGradCam": GuidedGradCam,
+    "LayerConductance": LayerConductance,
     "DeepLift": DeepLift,
+    "LayerDeepLift": LayerDeepLift,
 }
 
 SUPPORTED_LIBRARIES = {"gradcam", "captum"}
@@ -72,7 +72,19 @@ class ExplanationGenerator:
         self.method = method
 
         if self.library not in SUPPORTED_LIBRARIES:
-            raise ValueError(f"Unsupported library '{self.library}'. Supported libraries: {SUPPORTED_LIBRARIES}.")
+            raise ValueError(
+                f"Unsupported library '{self.library}'. Supported libraries: {', '.join(SUPPORTED_LIBRARIES)}."
+            )
+
+        # If the method is LayerGradCam or GuidedGradCam, check for supported models
+        if self.method in {"LayerGradCam", "GuidedGradCam"}:
+            supported_models = {"resnet50", "alexnet"}  
+            model_name = self.model.__class__.__name__.lower()
+            if model_name not in supported_models:
+                raise ValueError(
+                    f"Unsupported model '{self.model.__class__.__name__}' for the '{self.method}' method "
+                    f"from the Captum library. Supported models: {', '.join(supported_models)}."
+        )
 
     def generate_explanations(
         self,
@@ -142,12 +154,12 @@ class ExplanationGenerator:
         # Compute the fraction of noise that caused a change in the predicted label
         changes = np.array([i for i in range(1, n_images) if predicted_labels[i] != predicted_labels[i-1]], dtype=int)
         changes = np.insert(changes, 0, 0) # Include the first image with 0 noise
+    
+        # If there is no change in the predicted label we add the last image and its explanation 
+        if len(changes) == 1:
+            changes = np.insert(changes, len(changes), n_images-1)
 
-        changes = np.insert(changes, len(changes), n_images-1)
-
-        noise_fraction_changes = changes / n_images
-        if len(changes) == 2:
-            noise_fraction_changes[-1] = 0
+        noise_fraction_changes = changes / (n_images-1)
 
         explanations_changes = explanations[changes]        
         predicted_labels_changes = [predicted_labels[i] for i in changes]
