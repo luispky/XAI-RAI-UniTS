@@ -327,9 +327,7 @@ def main(
     labels = load_labels(str(LABELS_PATH))
 
     # Load images (sample_filenames picks random images if no explicit list is given)
-    # filenames = sample_filenames(n=sample_images)
-    filenames = ['petri_dish', 'conch', 'butterfly_2', 'brain_coral', 'bird', 
-                 'maltese', 'parachute', 'chair', 'dowitcher', 'snake', 'persian_cat_7']
+    filenames = sample_filenames(n=sample_images)
     images = load_local_images(filenames)
 
     # Determine which models to run
