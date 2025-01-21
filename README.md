@@ -235,11 +235,11 @@ python xai_rai_units/scripts/explanations_perturbed_images.py \
 
 | 🔍 Grad-CAM Variants | 🎯 Captum Methods     |
 |----------------------|-----------------------|
-| GradCAM              | LayerGradCam (only `alexnet` and `resnet50`)          |
-| GradCAM++            | GuidedGradCam (only `alexnet` and `resnet50`)         |
+| GradCAM              | LayerGradCam (only `alexnet` and `resnet50`)           |
+| GradCAM++            | GuidedGradCam (only `alexnet` and `resnet50`)          |
 | XGradCAM             | LayerConductance      |
 | EigenCAM             | DeepLift              |
-| HiResCAM             | DeepLiftSHAP          |
+| HiResCAM             | LayerDeepLift          |
 
 ---
 

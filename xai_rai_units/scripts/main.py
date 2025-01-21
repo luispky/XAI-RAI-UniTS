@@ -119,7 +119,10 @@ def process_image_for_model(
         labels: List[str],
         n_perturbations: int,
         magnitude: float,
-        show_figures: bool = True):
+        show_figures: bool = True,
+        library: str = "gradcam",
+        method: str = "GradCAM"
+        ):
     """
     Generate perturbed images, produce explanations, and plot:
       1. The last perturbed image (row 1).
@@ -137,6 +140,8 @@ def process_image_for_model(
         n_perturbations (int): Number of images used for perturbation (linspace).
         magnitude (float): Magnitude of the perturbation.
         show_figures (bool): If True (default), display figures; if False, saves to FIGURES_DIR/robustness.
+        library (str): Library to use for generating explanations (e.g., gradcam). Just used for logging.
+        method (str): XAI method to use (e.g., GradCAM, LayerCAM, etc.). Just used for logging.
     
     Returns:
         None
@@ -147,7 +152,8 @@ def process_image_for_model(
     else:
         # Save the figure to the "robustness" subdirectory under FIGURES_DIR
         output_filename = (
-            f"{model.__class__.__name__}_mag{magnitude}_n-pert{n_perturbations}_{filename}"
+            f"{model.__class__.__name__}_{library}_{method}_mag{magnitude:.2f}_"
+            f"n-pert{n_perturbations}_{filename}"
         )
         robustness_dir = FIGURES_DIR / "robustness"
         robustness_dir.mkdir(parents=True, exist_ok=True)
@@ -194,15 +200,29 @@ def process_image_for_model(
         # Pick the second explanation if available, else the first
         j = 1 if len(explanations) >= 2 else 0
 
-        noisy_explanation = explanations[j].clone()
+        # Clone and detach the explanation
+        noisy_explanation = explanations[j].clone().detach()
 
-        # Normalize explanation to [0,1] and clamp
+        # Ensure the image has the shape (H, W, C) suitable for imshow
+        if noisy_explanation.dim() == 3:  # Check if the image has 3 dimensions
+            if noisy_explanation.shape[0] in {1, 3}:  # Likely (C, H, W) format
+                noisy_explanation = noisy_explanation.permute(1, 2, 0)  # Convert to (H, W, C)
+
+        # Normalize explanation to [0, 1] and clamp
         _min, _max = noisy_explanation.min(), noisy_explanation.max()
         denom = max(_max - _min, 1e-8)
         noisy_explanation = (noisy_explanation - _min) / denom
         noisy_explanation = torch.clamp(noisy_explanation, 0, 1)
 
-        plt.imshow(noisy_explanation.numpy())
+        # Convert to NumPy for imshow
+        noisy_explanation = noisy_explanation.cpu().numpy()
+
+        # Handle single-channel images (grayscale)
+        if noisy_explanation.shape[-1] == 1:  # If the last dimension is 1 (e.g., (H, W, 1))
+            noisy_explanation = noisy_explanation.squeeze(-1)  # Remove the singleton dimension
+
+        # Display the image
+        plt.imshow(noisy_explanation)
         plt.axis("off")
 
         # Text box above explanation
@@ -307,7 +327,9 @@ def main(
     labels = load_labels(str(LABELS_PATH))
 
     # Load images (sample_filenames picks random images if no explicit list is given)
-    filenames = sample_filenames(n=sample_images)
+    # filenames = sample_filenames(n=sample_images)
+    filenames = ['petri_dish', 'conch', 'butterfly_2', 'brain_coral', 'bird', 
+                 'maltese', 'parachute', 'chair', 'dowitcher', 'snake', 'persian_cat_7']
     images = load_local_images(filenames)
 
     # Determine which models to run
@@ -333,7 +355,9 @@ def main(
                 labels=labels,
                 n_perturbations=n_perturbations,
                 magnitude=magnitude,
-                show_figures=show_figures
+                show_figures=show_figures, 
+                library=library, 
+                method=method
             )
 
 

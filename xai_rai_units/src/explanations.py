@@ -79,7 +79,7 @@ class ExplanationGenerator:
         # If the method is LayerGradCam or GuidedGradCam, check for supported models
         if self.method in {"LayerGradCam", "GuidedGradCam"}:
             supported_models = {"ResNet", "AlexNet"}  
-            model_name = self.model.__class__.__name__.lower()
+            model_name = self.model.__class__.__name__
             if model_name not in supported_models:
                 raise ValueError(
                     f"Unsupported model '{self.model.__class__.__name__}' for the '{self.method}' method "
